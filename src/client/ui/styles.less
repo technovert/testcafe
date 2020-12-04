@@ -333,6 +333,7 @@
         display: flex;            
         color: rgba(255, 255, 255, 0.8);
         flex-wrap: nowrap;
+        flex-direction: row;
         font-family: '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Helvetica', 'Arial', 'sans-serif', 'Apple Color Emoji', 'Segoe UI Emoji';
 
         .icon {
@@ -366,6 +367,7 @@
                 width: 100%;
                 align-items: center;
                 display: flex;
+                flex-direction: row;
                 justify-content: space-between;
                 white-space: nowrap;
                 flex: 1;
@@ -374,6 +376,7 @@
                     align-items: center;           
                     min-width: 0; 
                     overflow: hidden;
+                    display: block;
 
                     .info {
                         text-overflow: ellipsis;
@@ -432,6 +435,7 @@
 
         .buttons, .button {
             display: flex;
+            flex-direction: row;
         }
 
         .actions-container {
