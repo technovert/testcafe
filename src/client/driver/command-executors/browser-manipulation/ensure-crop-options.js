@@ -1,7 +1,7 @@
 import { styleUtils } from '../../deps/testcafe-core';
 import { getOffsetOptions } from '../../deps/testcafe-automation';
 import limitNumber from '../../../../utils/limit-number';
-import { ActionInvalidScrollTargetError, InvalidElementScreenshotDimensionsError } from '../../../../shared/errors';
+import { ActionInvalidScrollTargetError, InvalidElementScreenshotDimensionsError } from '../../../../errors/test-run';
 
 
 function determineDimensionBounds (bounds, maximum) {

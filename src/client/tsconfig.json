@@ -1,5 +1,6 @@
 {
   "compilerOptions": {
+    "outDir": "../../../../../lib/src/modules/runner/client",
     "target": "ES5",
     "module": "ES6",
     "strict": true,

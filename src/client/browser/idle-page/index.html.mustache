@@ -14,8 +14,9 @@
     <div class="container">
         <canvas class="spinner"></canvas>
         <div class="status-text-area">
-            <img class="logo" src="/browser/assets/logo.svg"/>
-
+            <div class="app-title">
+                <span>ReadyTest.IO</span>
+            </div>
             <div class="user-agent">
                 <span>{{{userAgent}}}</span>
             </div>
@@ -27,9 +28,7 @@
 </div>
 
 <script type="text/javascript">
-    var idlePage = new IdlePage('{{{statusUrl}}}', '{{{heartbeatUrl}}}', '{{{initScriptUrl}}}', { retryTestPages: {{{retryTestPages}}} });
-
-    idlePage.start();
+    new IdlePage('{{{statusUrl}}}', '{{{heartbeatUrl}}}', '{{{initScriptUrl}}}', { retryTestPages: {{{retryTestPages}}} });
 </script>
 </body>
 </html>

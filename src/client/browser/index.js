@@ -2,29 +2,22 @@
 // TODO: Get rid of Pinkie after dropping IE11
 import COMMAND from '../../browser/connection/command';
 import HeartbeatStatus from '../../browser/connection/heartbeat-status';
+import { UNSTABLE_NETWORK_MODE_HEADER } from '../../browser/connection/unstable-network-mode';
 import { HEARTBEAT_INTERVAL } from '../../utils/browser-connection-timeouts';
-import SERVICE_ROUTES from '../../browser/connection/service-routes';
-
-/*eslint-disable no-restricted-properties*/
-const LOCATION_HREF   = document.location.href;
-const LOCATION_ORIGIN = document.location.origin;
-/*eslint-enable no-restricted-properties*/
-
-const STATUS_RETRY_DELAY = 1000;
-const MAX_STATUS_RETRY   = 5;
-
-const SERVICE_WORKER_LOCATION = LOCATION_ORIGIN + SERVICE_ROUTES.serviceWorker;
 
 let allowInitScriptExecution = false;
+let retryTestPages           = false;
 let heartbeatIntervalId      = null;
+
+const noop  = () => void 0;
+const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
 
 const evaluate = eval; // eslint-disable-line no-eval
 
-//Utils
-export function delay (ms) {
-    return new Promise(resolve => setTimeout(resolve, ms));
-}
+const FETCH_PAGE_TO_CACHE_RETRY_DELAY = 300;
+const FETCH_PAGE_TO_CACHE_RETRY_COUNT = 5;
 
+//Utils
 // NOTE: the window.XMLHttpRequest may have been wrapped by Hammerhead, while we should send a request to
 // the original URL. That's why we need the XMLHttpRequest argument to send the request via native methods.
 export function sendXHR (url, createXHR, { method = 'GET', data = null, parseResponse = true } = {}) {
@@ -32,6 +25,11 @@ export function sendXHR (url, createXHR, { method = 'GET', data = null, parseRes
         const xhr = createXHR();
 
         xhr.open(method, url, true);
+
+        if (isRetryingTestPagesEnabled()) {
+            xhr.setRequestHeader(UNSTABLE_NETWORK_MODE_HEADER, 'true');
+            xhr.setRequestHeader('accept', 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8');
+        }
 
         xhr.onreadystatechange = () => {
             if (xhr.readyState === 4) {
@@ -53,8 +51,11 @@ export function sendXHR (url, createXHR, { method = 'GET', data = null, parseRes
 }
 
 function isCurrentLocation (url) {
-    return LOCATION_HREF.toLowerCase() === url.toLowerCase();
+    /*eslint-disable no-restricted-properties*/
+    return document.location.href.toLowerCase() === url.toLowerCase();
+    /*eslint-enable no-restricted-properties*/
 }
+
 
 //API
 export function startHeartbeat (heartbeatUrl, createXHR) {
@@ -108,58 +109,50 @@ export function redirect (command) {
     document.location = command.url;
 }
 
-async function getStatus (statusUrl, createXHR, { manualRedirect } = {}) {
-    const result = await sendXHR(statusUrl, createXHR);
+export function fetchPageToCache (pageUrl, createXHR) {
+    const requestAttempt = () => sendXHR(pageUrl, createXHR, { parseResponse: false });
+    const retryRequest   = () => delay(FETCH_PAGE_TO_CACHE_RETRY_DELAY).then(requestAttempt);
 
-    const redirecting = (result.cmd === COMMAND.run || result.cmd === COMMAND.idle) && !isCurrentLocation(result.url);
+    let fetchPagePromise = requestAttempt();
 
-    if (redirecting && !manualRedirect)
-        redirect(result);
+    for (let i = 0; i < FETCH_PAGE_TO_CACHE_RETRY_COUNT; i++)
+        fetchPagePromise = fetchPagePromise.catch(retryRequest);
 
-    return { command: result, redirecting };
+    return fetchPagePromise.catch(noop);
 }
 
-async function tryGetStatus (...args) {
-    try {
-        return await getStatus(...args);
-    }
-    catch (error) {
-        // eslint-disable-next-line no-console
-        console.error(error);
+export function checkStatus (statusUrl, createXHR, opts) {
+    const { manualRedirect } = opts || {};
 
-        return { error };
-    }
+    return sendXHR(statusUrl, createXHR)
+        .then(result => {
+            let ensurePagePromise = Promise.resolve();
+
+            if (result.url && isRetryingTestPagesEnabled())
+                ensurePagePromise = fetchPageToCache(result.url, createXHR);
+
+            return ensurePagePromise.then(() => result);
+        })
+        .then(result => {
+            const redirecting = (result.cmd === COMMAND.run || result.cmd === COMMAND.idle) && !isCurrentLocation(result.url);
+
+            if (redirecting && !manualRedirect)
+                redirect(result);
+
+            return { command: result, redirecting };
+        });
 }
 
-export async function checkStatus (...args) {
-    let error  = null;
-    let result = null;
-
-    for (let i = 0; i < MAX_STATUS_RETRY; i++) {
-        ({ error, ...result } = await tryGetStatus(...args));
-
-        if (!error)
-            return result;
-
-        await delay(STATUS_RETRY_DELAY);
-    }
-
-    throw error;
+export function enableRetryingTestPages () {
+    retryTestPages = true;
 }
 
-export async function enableRetryingTestPages () {
-    if (!navigator.serviceWorker)
-        return;
+export function disableRetryingTestPages () {
+    retryTestPages = false;
+}
 
-    try {
-        await navigator.serviceWorker.register(SERVICE_WORKER_LOCATION, { scope: LOCATION_ORIGIN });
-
-        await navigator.serviceWorker.ready;
-    }
-    catch (error) {
-        // eslint-disable-next-line no-console
-        console.error(error);
-    }
+export function isRetryingTestPagesEnabled () {
+    return retryTestPages;
 }
 
 export function getActiveWindowId (activeWindowIdUrl, createXHR) {

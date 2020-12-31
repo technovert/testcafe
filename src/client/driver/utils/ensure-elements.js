@@ -1,4 +1,4 @@
-import { Promise, nativeMethods } from '../deps/hammerhead';
+import { Promise } from '../deps/hammerhead';
 
 import { domUtils, NODE_TYPE_DESCRIPTIONS } from '../deps/testcafe-core';
 
@@ -11,16 +11,15 @@ import {
     ActionAdditionalElementNotFoundError,
     ActionAdditionalElementIsInvisibleError,
     ActionAdditionalSelectorMatchesWrongNodeTypeError
-} from '../../../shared/errors';
+} from '../../../errors/test-run';
 
-const DateCtor = nativeMethods.date;
 
 class ElementsRetriever {
     constructor (elementDescriptors, globalSelectorTimeout) {
         this.elements                = [];
         this.globalSelectorTimeout   = globalSelectorTimeout;
         this.ensureElementsPromise   = Promise.resolve();
-        this.ensureElementsStartTime = new DateCtor();
+        this.ensureElementsStartTime = new Date();
 
         elementDescriptors.forEach(descriptor => this._ensureElement(descriptor));
     }

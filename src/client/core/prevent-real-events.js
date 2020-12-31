@@ -4,11 +4,7 @@ import scrollController from './scroll-controller';
 
 import { get, hasDimensions } from './utils/style';
 import { filter } from './utils/array';
-import {
-    isShadowUIElement,
-    isWindow,
-    getParents
-} from './utils/dom';
+import { isShadowUIElement, isWindow, getParents } from './utils/dom';
 
 const browserUtils   = utils.browser;
 const listeners      = eventSandbox.listeners;

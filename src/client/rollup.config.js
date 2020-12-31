@@ -9,20 +9,17 @@ import inject from '@rollup/plugin-inject';
 import alias from '@rollup/plugin-alias';
 
 
-const NO_HAMMERHEAD_CHUNKS = [
-    'browser/idle-page/index.js',
-    'browser/service-worker.js'
-];
+const IDLE_PAGE_CHUNK = 'browser/idle-page/index.js';
 
 const CHUNK_NAMES = [
-    ...NO_HAMMERHEAD_CHUNKS,
+    IDLE_PAGE_CHUNK,
     'core/index.js',
     'driver/index.js',
     'ui/index.js',
     'automation/index.js'
 ];
 
-const TARGET_DIR = '../../lib/client';
+const TARGET_DIR = '../../../../../lib/src/modules/runner/src/client';
 
 const COMMON_GLOBALS = {
     'hammerhead':          'window[\'%hammerhead%\']',
@@ -36,7 +33,7 @@ const EXTENDED_GLOBALS = {
     'pinkie': 'window[\'%hammerhead%\'].Promise'
 };
 
-const GLOBALS = chunk => NO_HAMMERHEAD_CHUNKS.includes(chunk) ? COMMON_GLOBALS : EXTENDED_GLOBALS;
+const GLOBALS = chunk => chunk === IDLE_PAGE_CHUNK ? COMMON_GLOBALS : EXTENDED_GLOBALS;
 
 const CONFIG = CHUNK_NAMES.map(chunk => ({
     input:    chunk,
@@ -61,7 +58,7 @@ const CONFIG = CHUNK_NAMES.map(chunk => ({
             }]
         }),
         commonjs(),
-        typescript({ include: ['*.+(j|t)s', '**/*.+(j|t)s', '../**/*.+(j|t)s'] })
+        typescript({ include: ['*.+(j|t)s', '**/*.+(j|t)s', '../**/*.+(j|t)s'] }),
     ]
 }));
 

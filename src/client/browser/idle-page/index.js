@@ -3,46 +3,36 @@ import StatusIndicator from './status-indicator';
 import COMMAND from '../../../browser/connection/command';
 
 
-const createXHR = () => new XMLHttpRequest();
-
 const CHECK_STATUS_DELAY = 1000;
 
+const createXHR = () => new XMLHttpRequest();
+
+
 class IdlePage {
-    constructor (statusUrl, heartbeatUrl, initScriptUrl, { retryTestPages } = {}) {
+    constructor (statusUrl, heartbeatUrl, initScriptUrl, options = {}) {
         this.statusUrl       = statusUrl;
-        this.heartbeatUrl    = heartbeatUrl;
-        this.initScriptUrl   = initScriptUrl;
         this.statusIndicator = new StatusIndicator();
 
-        this.retryTestPages = retryTestPages;
+        if (options.retryTestPages)
+            browser.enableRetryingTestPages();
+
+        browser.startHeartbeat(heartbeatUrl, createXHR);
+        browser.startInitScriptExecution(initScriptUrl, createXHR);
+
+        this._checkStatus();
 
         document.title = '[' + document.location.toString() + ']';
     }
 
-    async _pollStatus () {
-        let { command } = await browser.checkStatus(this.statusUrl, createXHR);
-
-        while (command.cmd === COMMAND.idle) {
-            await browser.delay(CHECK_STATUS_DELAY);
-
-            ({ command } = await browser.checkStatus(this.statusUrl, createXHR));
-        }
-    }
-
-    async start () {
-        if (this.retryTestPages)
-            await browser.enableRetryingTestPages();
-
-        browser.startHeartbeat(this.heartbeatUrl, createXHR);
-        browser.startInitScriptExecution(this.initScriptUrl, createXHR);
-
+    async _checkStatus () {
         try {
-            await this._pollStatus();
-        }
-        catch (error) {
-            this.statusIndicator.showDisconnection();
+            const { command } = await browser.checkStatus(this.statusUrl, createXHR);
 
-            throw error;
+            if (command.cmd === COMMAND.idle)
+                window.setTimeout(() => this._checkStatus(), CHECK_STATUS_DELAY);
+        }
+        catch (err) {
+            this.statusIndicator.showDisconnection();
         }
     }
 }

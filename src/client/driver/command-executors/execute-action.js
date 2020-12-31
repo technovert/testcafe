@@ -1,4 +1,4 @@
-import { Promise, nativeMethods } from '../deps/hammerhead';
+import { Promise } from '../deps/hammerhead';
 import { SelectorElementActionTransform, createReplicator } from './client-functions/replicator';
 
 import {
@@ -30,11 +30,7 @@ import {
 import DriverStatus from '../status';
 
 import runWithBarriers from '../utils/run-with-barriers';
-import {
-    ensureElements,
-    createElementDescriptor,
-    createAdditionalElementDescriptor
-} from '../utils/ensure-elements';
+import { ensureElements, createElementDescriptor, createAdditionalElementDescriptor } from '../utils/ensure-elements';
 
 import {
     ActionElementIsInvisibleError,
@@ -45,7 +41,7 @@ import {
     ActionRootContainerNotFoundError,
     ActionElementNotTextAreaError,
     ActionElementIsNotFileInputError
-} from '../../../shared/errors';
+} from '../../../errors/test-run';
 
 import COMMAND_TYPE from '../../../test-run/commands/type';
 
@@ -89,8 +85,6 @@ function ensureOffsetOptions (element, options) {
 const MAX_DELAY_AFTER_EXECUTION             = 2000;
 const CHECK_ELEMENT_IN_AUTOMATIONS_INTERVAL = 250;
 
-const DateCtor = nativeMethods.date;
-
 class ActionExecutor {
     constructor (command, globalSelectorTimeout, statusBar, testSpeed) {
         this.command                = command;
@@ -122,7 +116,7 @@ class ActionExecutor {
     }
 
     _isExecutionTimeoutExpired () {
-        return nativeMethods.dateNow() - this.executionStartTime >= this.commandSelectorTimeout;
+        return Date.now() - this.executionStartTime >= this.commandSelectorTimeout;
     }
 
     _ensureCommandArguments () {
@@ -293,7 +287,7 @@ class ActionExecutor {
         });
 
         const completionPromise = new Promise(resolve => {
-            this.executionStartTime = new DateCtor();
+            this.executionStartTime = new Date();
 
             try {
                 this._ensureCommandArguments();

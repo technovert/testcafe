@@ -5,10 +5,8 @@ import Driver from './driver';
 import ContextStorage from './storage';
 import DriverStatus from './status';
 import ParentIframeDriverLink from './driver-link/iframe/parent';
-import { ChildWindowIsOpenedInFrameMessage, TYPE as MESSAGE_TYPE } from './driver-link/messages';
+import { TYPE as MESSAGE_TYPE } from './driver-link/messages';
 import IframeNativeDialogTracker from './native-dialog-tracker/iframe';
-
-const messageSandbox = eventSandbox.message;
 
 export default class IframeDriver extends Driver {
     constructor (testRunId, options) {
@@ -26,12 +24,6 @@ export default class IframeDriver extends Driver {
 
     _onConsoleMessage () {
         // NOTE: do nothing because hammerhead sends console messages to the top window directly
-    }
-
-    // NOTE: when the new page is opened in the iframe we send a message to the top window
-    // to start waiting for the new page is loaded
-    _onChildWindowOpened () {
-        messageSandbox.sendServiceMsg(new ChildWindowIsOpenedInFrameMessage(), window.top);
     }
 
     // Messaging between drivers

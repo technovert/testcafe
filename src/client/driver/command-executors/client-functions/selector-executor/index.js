@@ -1,16 +1,10 @@
-import { Promise, nativeMethods } from '../../../deps/hammerhead';
-import { delay, domUtils } from '../../../deps/testcafe-core';
+import { Promise } from '../../../deps/hammerhead';
+import { delay } from '../../../deps/testcafe-core';
 import ClientFunctionExecutor from '../client-function-executor';
 import { exists, visible } from '../../../utils/element-utils';
-import {
-    createReplicator,
-    FunctionTransform,
-    SelectorNodeTransform
-} from '../replicator';
-
+import { createReplicator, FunctionTransform, SelectorNodeTransform } from '../replicator';
 import './filter';
 
-const DateCtor = nativeMethods.date;
 
 const CHECK_ELEMENT_DELAY = 200;
 
@@ -25,7 +19,7 @@ export default class SelectorExecutor extends ClientFunctionExecutor {
         this.getVisibleValueMode    = this.dependencies.filterOptions.getVisibleValueMode;
 
         if (startTime) {
-            const elapsed = new DateCtor() - startTime;
+            const elapsed = new Date() - startTime;
 
             this.timeout = Math.max(this.timeout - elapsed, 0);
         }
@@ -61,9 +55,9 @@ export default class SelectorExecutor extends ClientFunctionExecutor {
             .then(el => {
                 const isElementExists    = exists(el);
                 const isElementVisible   = !this.command.visibilityCheck || visible(el);
-                const isTimeout          = new DateCtor() - startTime >= this.timeout;
+                const isTimeout          = new Date() - startTime >= this.timeout;
 
-                if (isElementExists && (isElementVisible || domUtils.isShadowRoot(el)))
+                if (isElementExists && isElementVisible)
                     return el;
 
                 if (!isTimeout)
@@ -82,7 +76,7 @@ export default class SelectorExecutor extends ClientFunctionExecutor {
         if (this.counterMode)
             return super._executeFn(args);
 
-        const startTime = new DateCtor();
+        const startTime = new Date();
         let error       = null;
         let element     = null;
 

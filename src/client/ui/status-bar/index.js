@@ -3,7 +3,6 @@ import testCafeCore from './../deps/testcafe-core';
 import ProgressBar from './progress-bar';
 import uiRoot from '../ui-root';
 import MESSAGES from './messages';
-import isIframeWindow from '../../../utils/is-window-in-iframe';
 
 
 const Promise          = hammerhead.Promise;
@@ -224,7 +223,7 @@ export default class StatusBar extends serviceUtils.EventEmitter {
     }
 
     _createBeforeReady () {
-        if (this.state.created || isIframeWindow(window))
+        if (this.state.created || window !== window.top)
             return;
 
         if (document.body)
@@ -234,7 +233,7 @@ export default class StatusBar extends serviceUtils.EventEmitter {
     }
 
     _animate (show) {
-        const startTime         = nativeMethods.dateNow();
+        const startTime         = Date.now();
         const startOpacityValue = parseInt(styleUtils.get(this.statusBar, 'opacity'), 10) || 0;
         let passedTime        = 0;
         let progress          = 0;
@@ -248,7 +247,7 @@ export default class StatusBar extends serviceUtils.EventEmitter {
         }
 
         this.animationInterval = nativeMethods.setInterval.call(window, () => {
-            passedTime = nativeMethods.dateNow() - startTime;
+            passedTime = Date.now() - startTime;
             progress   = Math.min(passedTime / ANIMATION_DELAY, 1);
             delta      = 0.5 - Math.cos(progress * Math.PI) / 2;
 

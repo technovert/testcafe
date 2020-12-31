@@ -13,7 +13,6 @@ import AutomationSettings from '../../settings';
 import DragAndDropState from '../drag/drag-and-drop-state';
 import createEventSequence from './event-sequence/create-event-sequence';
 import lastHoveredElementHolder from '../last-hovered-element-holder';
-import isIframeWindow from '../../../../utils/is-window-in-iframe';
 
 const Promise          = hammerhead.Promise;
 const nativeMethods    = hammerhead.nativeMethods;
@@ -413,7 +412,7 @@ export default class MoveAutomation {
             .then(message => {
                 cursor.activeWindow = window;
 
-                if (iframeUnderCursor || isIframeWindow(window))
+                if (iframeUnderCursor || window.top !== window)
                     return cursor.move(message.x, message.y);
 
                 return null;

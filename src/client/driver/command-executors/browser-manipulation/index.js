@@ -1,24 +1,7 @@
-import {
-    transport,
-    eventSandbox,
-    Promise
-} from '../../deps/hammerhead';
-
-import {
-    domUtils,
-    scrollController,
-    sendRequestToFrame,
-    delay
-} from '../../deps/testcafe-core';
-
+import { transport, eventSandbox, Promise } from '../../deps/hammerhead';
+import { domUtils, scrollController, sendRequestToFrame, delay } from '../../deps/testcafe-core';
 import { Scroll as ScrollAutomation } from '../../deps/testcafe-automation';
-import {
-    hide as hideUI,
-    show as showUI,
-    showScreenshotMark,
-    hideScreenshotMark
-} from '../../deps/testcafe-ui';
-
+import { hide as hideUI, show as showUI, showScreenshotMark, hideScreenshotMark } from '../../deps/testcafe-ui';
 import DriverStatus from '../../status';
 import ensureCropOptions from './ensure-crop-options';
 import { ensureElements, createElementDescriptor } from '../../utils/ensure-elements';
@@ -26,7 +9,6 @@ import runWithBarriers from '../../utils/run-with-barriers';
 import MESSAGE from '../../../../test-run/client-messages';
 import COMMAND_TYPE from '../../../../test-run/commands/type';
 import { ScrollOptions, ElementScreenshotOptions } from '../../../../test-run/commands/options';
-import isIframeWindow from '../../../../utils/is-window-in-iframe';
 
 
 const messageSandbox = eventSandbox.message;
@@ -163,7 +145,7 @@ class ManipulationExecutor {
     }
 
     _requestManipulation () {
-        if (!isIframeWindow(window))
+        if (window.top === window)
             return transport.queuedAsyncServiceMsg(this._createManipulationReadyMessage());
 
         const cropDimensions = this._getAbsoluteCropValues();
@@ -202,7 +184,7 @@ class ManipulationExecutor {
                 return this._runScrollBeforeScreenshot();
             })
             .then(() => {
-                if (!isIframeWindow(window))
+                if (window.top === window)
                     return this._hideUI();
 
                 return Promise.resolve();
@@ -216,7 +198,7 @@ class ManipulationExecutor {
 
                 manipulationResult = result;
 
-                if (!isIframeWindow(window))
+                if (window.top === window)
                     this._showUI();
 
                 return delay(POSSIBLE_RESIZE_ERROR_DELAY);

@@ -1,9 +1,5 @@
 import { shadowUI, nativeMethods } from './deps/hammerhead';
-import {
-    MARK_LENGTH,
-    MARK_HEIGHT,
-    MARK_RIGHT_MARGIN
-} from '../../screenshots/constants';
+import { MARK_LENGTH, MARK_HEIGHT, MARK_RIGHT_MARGIN } from '../../screenshots/constants';
 
 
 export default {
