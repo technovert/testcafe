@@ -1,19 +1,19 @@
 {
-  "name": "testcafe",
+  "name": "testcafe-technovert",
   "description": "Automated browser testing for the modern web development stack.",
   "license": "MIT",
   "version": "1.10.1",
   "author": {
-    "name": "Developer Express Inc.",
-    "url": "https://www.devexpress.com/"
+    "name": "Technovert.",
+    "url": "https://www.technovert.com/"
   },
   "bugs": {
-    "url": "https://github.com/DevExpress/testcafe/issues"
+    "url": "https://github.com/technovert/testcafe/issues"
   },
-  "homepage": "https://devexpress.github.io/testcafe/",
+  "homepage": "https://github.com/technovert/testcafe",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/DevExpress/testcafe.git"
+    "url": "git+https://github.com/technovert/testcafe.git"
   },
   "engines": {
     "node": ">=10.0.0"
@@ -49,9 +49,7 @@
     "await"
   ],
   "scripts": {
-    "test": "gulp travis",
-    "publish-please": "del-cli package-lock.json node_modules && npm i && publish-please",
-    "prepublishOnly": "publish-please guard"
+    "test": "gulp travis"
   },
   "dependencies": {
     "@babel/core": "^7.12.1",
@@ -166,6 +164,7 @@
     "caller": "^1.0.1",
     "chai-string": "^1.5.0",
     "connect": "^3.4.0",
+    "del-cli": "^3.0.1",
     "devtools-protocol": "0.0.678506",
     "dom-walk": "^0.1.1",
     "escape-string-regexp": "^4.0.0",
@@ -201,7 +200,7 @@
     "open": "^6.4.0",
     "openssl-self-signed-certificate": "^1.1.6",
     "proxyquire": "^2.1.0",
-    "publish-please": "^5.5.1",
+    "publish-please": "^5.5.2",
     "react": "^16.13.1",
     "recursive-copy": "^2.0.5",
     "request": "^2.58.0",
