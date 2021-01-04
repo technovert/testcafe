@@ -1,98 +1,107 @@
-import path from 'path';
-import { Session } from 'testcafe-hammerhead';
-import TestRun from './';
-
+import path from "path";
+import { Session } from "testcafe-hammerhead";
+import { UNSTABLE_NETWORK_MODE_HEADER } from "../browser/connection/unstable-network-mode";
 
 const ACTIVE_SESSIONS_MAP = {};
-const UPLOADS_DIR_NAME = '_uploads_';
+const UPLOADS_DIR_NAME = "_uploads_";
 
 export default class SessionController extends Session {
-    constructor (uploadRoots, options) {
-        super(uploadRoots, options);
+    constructor(uploadRoots) {
+        super(uploadRoots);
 
         this.currentTestRun = null;
     }
 
     // Hammerhead payload
-    async getPayloadScript () {
+    async getPayloadScript() {
         return this.currentTestRun.getPayloadScript();
     }
 
-    async getIframePayloadScript () {
+    async getIframePayloadScript() {
         return this.currentTestRun.getIframePayloadScript();
     }
 
-
     // Hammerhead handlers
-    handleServiceMessage (msg, serverInfo) {
+    handleServiceMessage(msg, serverInfo) {
         if (this.currentTestRun[msg.cmd])
-            return super.handleServiceMessage.call(this.currentTestRun, msg, serverInfo);
+            return super.handleServiceMessage.call(
+                this.currentTestRun,
+                msg,
+                serverInfo
+            );
 
         return super.handleServiceMessage(msg, serverInfo);
     }
 
-    getAuthCredentials () {
+    getAuthCredentials() {
         return this.currentTestRun.getAuthCredentials();
     }
 
-    handleFileDownload () {
+    handleFileDownload() {
         return this.currentTestRun.handleFileDownload();
     }
 
-    handlePageError (ctx, err) {
+    handlePageError(ctx, err) {
         return this.currentTestRun.handlePageError(ctx, err);
     }
 
+    onPageRequest(ctx) {
+        const pendingStateSnapshot = this.pendingStateSnapshot;
+
+        super.onPageRequest(ctx);
+
+        if (
+            pendingStateSnapshot &&
+            ctx.req.headers[UNSTABLE_NETWORK_MODE_HEADER]
+        )
+            this.pendingStateSnapshot = pendingStateSnapshot;
+    }
     // API
-    static getSession (testRun) {
+    static getSession(testRun) {
         let sessionInfo = ACTIVE_SESSIONS_MAP[testRun.browserConnection.id];
+
+        let session;
 
         if (!sessionInfo || !testRun.disablePageReloads) {
             if (sessionInfo && sessionInfo.url)
                 SessionController.closeSession(testRun);
 
-            let session = null;
-
-            if (testRun.test.isLegacy)
-                session = testRun;
+            if (testRun.test.isLegacy) session = testRun;
             else {
                 const fixtureDir = path.dirname(testRun.test.fixture.path);
 
-                const uploadRoots = [
+                session = new SessionController([
                     path.resolve(UPLOADS_DIR_NAME),
                     path.resolve(fixtureDir, UPLOADS_DIR_NAME),
-                    fixtureDir
-                ];
-
-                const options = {
-                    disablePageCaching:   testRun.disablePageCaching,
-                    allowMultipleWindows: TestRun.isMultipleWindowsAllowed(testRun),
-                    requestTimeout:       testRun.requestTimeout
-                };
-
-                if (options.allowMultipleWindows)
-                    options.windowId = testRun.browserConnection.activeWindowId;
-
-                session = new SessionController(uploadRoots, options);
+                    fixtureDir,
+                ]);
 
                 session.currentTestRun = testRun;
             }
 
+            session.disablePageCaching = testRun.disablePageCaching;
+            session.allowMultipleWindows = testRun.allowMultipleWindows;
+
+            if (session.allowMultipleWindows)
+                session.windowId = testRun.browserConnection.activeWindowId;
+
             sessionInfo = {
                 session: session,
-                proxy:   null,
-                url:     null
+                proxy: null,
+                url: null,
             };
 
             ACTIVE_SESSIONS_MAP[testRun.browserConnection.id] = sessionInfo;
-        }
-        else if (!testRun.test.isLegacy)
+        } else if (testRun.disablePageReloads) {
+            sessionInfo.session.currentTestRun = testRun;
+            ACTIVE_SESSIONS_MAP[testRun.browserConnection.id] = sessionInfo;
+        } else if (!testRun.test.isLegacy)
             sessionInfo.session.currentTestRun = testRun;
 
         return sessionInfo.session;
     }
 
-    static getSessionUrl (testRun, proxy) {
+    static getSessionUrl(testRun, proxy) {
         let sessionInfo = ACTIVE_SESSIONS_MAP[testRun.browserConnection.id];
 
         if (!sessionInfo || testRun.test.isLegacy) {
@@ -101,34 +110,36 @@ export default class SessionController extends Session {
             sessionInfo = ACTIVE_SESSIONS_MAP[testRun.browserConnection.id];
         }
 
-        if (!sessionInfo.url) {
-            const pageUrl             = testRun.test.pageUrl;
-            const externalProxyHost   = testRun.opts.proxy;
+        if (!sessionInfo.url || testRun.disablePageReloads) {
+            const pageUrl = testRun.test.pageUrl;
+            const externalProxyHost = testRun.opts.proxy;
             let externalProxySettings = null;
 
             if (externalProxyHost) {
                 externalProxySettings = {
-                    url:         externalProxyHost,
-                    bypassRules: testRun.opts.proxyBypass
+                    url: externalProxyHost,
+                    bypassRules: testRun.opts.proxyBypass,
                 };
             }
 
             sessionInfo.proxy = proxy;
-            sessionInfo.url   = proxy.openSession(pageUrl, sessionInfo.session, externalProxySettings);
+            sessionInfo.url = proxy.openSession(
+                pageUrl,
+                sessionInfo.session,
+                externalProxySettings
+            );
         }
 
         return sessionInfo.url;
     }
 
-    static closeSession (testRun) {
+    static closeSession(testRun) {
         const sessionInfo = ACTIVE_SESSIONS_MAP[testRun.browserConnection.id];
 
-        if (!sessionInfo || !sessionInfo.url || !sessionInfo.proxy)
-            return;
+        if (!sessionInfo || !sessionInfo.url || !sessionInfo.proxy) return;
 
         sessionInfo.proxy.closeSession(sessionInfo.session);
 
         delete ACTIVE_SESSIONS_MAP[testRun.browserConnection.id];
     }
 }
-
