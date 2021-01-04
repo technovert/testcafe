@@ -1,20 +1,19 @@
-import resolveCwd from 'resolve-cwd';
-import log from './log';
+import resolveCwd from "resolve-cwd";
+import log from "./log";
 
-
-function getLocalInstallation () {
-    const local = resolveCwd('testcafe/lib/cli');
+function getLocalInstallation() {
+    const local = resolveCwd("testcafe/lib/cli");
 
     if (local && local !== __filename) {
-        log.write('Using locally installed version of TestCafe.');
+        log.write("Using locally installed version of ReadyTest.");
         return local;
     }
 
-    return '';
+    return "";
 }
 
-(function loader () {
-    const cliPath = getLocalInstallation() || require.resolve('./cli');
+(function loader() {
+    const cliPath = getLocalInstallation() || require.resolve("./cli");
 
     require(cliPath);
 })();

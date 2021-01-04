@@ -60,7 +60,10 @@ exports["default"] = function () {
                     }
                 }
                 return {
-                    message: error.split("\n")[0],
+                    message:
+                        [error.split("\n")[0], error.split("\n")[2]].join(
+                            "\n\n"
+                        ) + "\n",
                     actionIndex: errorActionIndex,
                 };
             });
