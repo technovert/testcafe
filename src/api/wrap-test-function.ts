@@ -1,34 +1,22 @@
-import TestController from './test-controller';
-import testRunTracker from './test-run-tracker';
-import { TestRun } from './test-run-tracker.d';
-import TestCafeErrorList from '../errors/error-list';
-import { MissingAwaitError } from '../errors/test-run';
-import addRenderedWarning from '../notifications/add-rendered-warning';
-import WARNING_MESSAGES from '../notifications/warning-message';
+/* eslint-disable @typescript-eslint/explicit-function-return-type */
+/* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable quotes */
+import TestController from "./test-controller";
+import testRunTracker from "./test-run-tracker";
+import TestCafeErrorList from "../errors/error-list";
+// eslint-disable-next-line quotes
+import { MissingAwaitError } from "../errors/test-run";
 
-export default function wrapTestFunction (fn: Function): Function {
-    return async (testRun: TestRun) => {
-        let result       = null;
-        const errList    = new TestCafeErrorList();
-        const markeredfn = testRunTracker.addTrackingMarkerToFunction(testRun.id, fn);
-
-        function addWarnings (callsiteSet: Set<Record<string, any>>, message: string): void {
-            callsiteSet.forEach(callsite => {
-                addRenderedWarning(testRun.warningLog, message, callsite);
-                callsiteSet.delete(callsite);
-            });
-        }
-
-        function addErrors (callsiteSet: Set<Record<string, any>>, ErrorClass: any): void {
-            callsiteSet.forEach(callsite => {
-                errList.addError(new ErrorClass(callsite));
-                callsiteSet.delete(callsite);
-            });
-        }
+export default function wrapTestFunction (fn: Function): any {
+    return async (testRun: { id: string; controller: TestController }) => {
+        let result = null;
+        const errList = new TestCafeErrorList();
+        const markeredfn = testRunTracker.addTrackingMarkerToFunction(
+            testRun.id,
+            fn
+        );
 
         testRun.controller = new TestController(testRun);
-
-        testRun.observedCallsites.clear();
 
         testRunTracker.ensureEnabled();
 
@@ -40,15 +28,14 @@ export default function wrapTestFunction (fn: Function): Function {
         }
 
         if (!errList.hasUncaughtErrorsInTestCode) {
-            for (const callsite of testRun.observedCallsites.awaitedSnapshotWarnings.values())
-                addRenderedWarning(testRun.warningLog, WARNING_MESSAGES.excessiveAwaitInAssertion, callsite);
-
-            addWarnings(testRun.observedCallsites.unawaitedSnapshotCallsites, WARNING_MESSAGES.missingAwaitOnSnapshotProperty);
-            addErrors(testRun.observedCallsites.callsitesWithoutAwait, MissingAwaitError);
+            (testRun.controller as any).callsitesWithoutAwait.forEach(
+                (callsite: any) => {
+                    errList.addError(new MissingAwaitError(callsite));
+                }
+            );
         }
 
-        if (errList.hasErrors)
-            throw errList;
+        if (errList.hasErrors) throw errList;
 
         return result;
     };

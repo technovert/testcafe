@@ -165,7 +165,7 @@ export default class Bootstrapper {
         const remotes: BrowserConnection[] = [];
         const automated: BrowserInfo[] = [];
 
-        browserInfo.forEach((browser) => {
+        browserInfo.forEach(browser => {
             if (browser instanceof BrowserConnection) remotes.push(browser);
             else automated.push(browser);
         });
@@ -218,7 +218,7 @@ export default class Bootstrapper {
             throw new GeneralError(RUNTIME_ERRORS.browserNotSet);
 
         const browserInfo = await Promise.all(
-            this.browsers.map((browser) =>
+            this.browsers.map(browser =>
                 browserProviderPool.getBrowserInfo(browser)
             )
         );
@@ -231,13 +231,13 @@ export default class Bootstrapper {
     ): BrowserConnection[][] {
         if (!browserInfo) return [];
 
-        return browserInfo.map((browser) =>
+        return browserInfo.map(browser =>
             times(
                 this.concurrency,
                 () =>
                     new BrowserConnection(
                         this.browserConnectionGateway,
-                        browser,
+                        browser as any,
                         false,
                         this.allowMultipleWindows
                     )
@@ -267,10 +267,10 @@ export default class Bootstrapper {
     }
 
     private _filterTests(tests: Test[], predicate: Filter): Test[] {
-        return tests.filter((test) =>
+        return tests.filter(test =>
             predicate(
                 test.name as string,
-                test.fixture.name,
+                test.fixture.name as string,
                 test.fixture.path,
                 test.meta,
                 test.fixture.meta
@@ -312,7 +312,7 @@ export default class Bootstrapper {
 
         let tests = await this._compileTests({ sourceList, compilerOptions });
 
-        const testsWithOnlyFlag = tests.filter((test) => test.only);
+        const testsWithOnlyFlag = tests.filter(test => test.only);
 
         if (testsWithOnlyFlag.length) tests = testsWithOnlyFlag;
 
@@ -414,7 +414,7 @@ export default class Bootstrapper {
     private async _canUseParallelBootstrapping(
         browserInfo: BrowserInfoSource[]
     ): Promise<boolean> {
-        const isLocalPromises = browserInfo.map((browser) =>
+        const isLocalPromises = browserInfo.map(browser =>
             browser.provider.isLocalBrowser(
                 void 0,
                 Bootstrapper._getBrowserName(browser)
@@ -422,7 +422,7 @@ export default class Bootstrapper {
         );
         const isLocalBrowsers = await Promise.all(isLocalPromises);
 
-        return isLocalBrowsers.every((result) => result);
+        return isLocalBrowsers.every(result => result);
     }
 
     private async _bootstrapSequence(
@@ -439,8 +439,8 @@ export default class Bootstrapper {
         promise: Promise<T>
     ): Promise<PromiseResult<T>> {
         return promise
-            .then((result) => ({ error: void 0, result }))
-            .catch((error) => ({ result: void 0, error }));
+            .then(result => ({ error: void 0, result }))
+            .catch(error => ({ result: void 0, error }));
     }
 
     private async _getBootstrappingError(

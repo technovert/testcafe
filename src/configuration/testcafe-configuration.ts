@@ -18,7 +18,7 @@ import {
     DEFAULT_DEVELOPMENT_MODE,
     DEFAULT_RETRY_TEST_PAGES,
     STATIC_CONTENT_CACHING_SETTINGS,
-    getDefaultCompilerOptions
+    getDefaultCompilerOptions,
 } from './default-values';
 
 import OptionSource from './option-source';
@@ -27,11 +27,14 @@ import {
     FilterOption,
     ReporterOption,
     StaticContentCachingOptions,
-    TypeScriptCompilerOptions
+    TypeScriptCompilerOptions,
 } from './interfaces';
 
 import CustomizableCompilers from './customizable-compilers';
-import { DEPRECATED_OPTIONS, DEPRECATED_OPTION_NAMES } from './deprecated-options';
+import {
+    DEPRECATED_OPTIONS,
+    DEPRECATED_OPTION_NAMES,
+} from './deprecated-options';
 
 const CONFIGURATION_FILENAME = '.testcaferc.json';
 
@@ -48,7 +51,7 @@ const OPTION_FLAG_NAMES = [
     OPTION_NAMES.disablePageCaching,
     OPTION_NAMES.disablePageReloads,
     OPTION_NAMES.disableScreenshots,
-    OPTION_NAMES.disableMultipleWindows
+    OPTION_NAMES.disableMultipleWindows,
 ];
 
 const OPTION_INIT_FLAG_NAMES = [
@@ -98,37 +101,55 @@ export default class TestCafeConfiguration extends Configuration {
     }
 
     public notifyAboutOverriddenOptions (): void {
-        if (!this._overriddenOptions.length)
-            return;
+        if (!this._overriddenOptions.length) return;
 
-        const optionsStr    = getConcatenatedValuesString(this._overriddenOptions);
+        const optionsStr = getConcatenatedValuesString(this._overriddenOptions);
         const optionsSuffix = getPluralSuffix(this._overriddenOptions);
 
-        Configuration._showConsoleWarning(renderTemplate(WARNING_MESSAGES.configOptionsWereOverridden, optionsStr, optionsSuffix));
+        Configuration._showConsoleWarning(
+            renderTemplate(
+                (WARNING_MESSAGES as any).configOptionsWereOverridden,
+                optionsStr,
+                optionsSuffix
+            )
+        );
 
         this._overriddenOptions = [];
     }
 
     public notifyAboutDeprecatedOptions (): void {
         const deprecatedOptionsObj = this.getOptions((name, option) => {
-            return DEPRECATED_OPTION_NAMES.includes(name) &&
-                option.value !== void 0;
+            return (
+                DEPRECATED_OPTION_NAMES.includes(name) &&
+                option.value !== void 0
+            );
         });
 
         const deprecatedOptionNames = Object.keys(deprecatedOptionsObj);
 
-        if (!deprecatedOptionNames.length)
-            return;
+        if (!deprecatedOptionNames.length) return;
 
-        const deprecatedOptions = DEPRECATED_OPTIONS.filter(deprecatedOption => deprecatedOptionNames.includes(deprecatedOption.what));
+        const deprecatedOptions = DEPRECATED_OPTIONS.filter(
+            deprecatedOption =>
+                deprecatedOptionNames.includes(deprecatedOption.what)
+        );
 
         const replacements = deprecatedOptions.reduce((result, current) => {
-            result += renderTemplate(WARNING_MESSAGES.deprecatedOptionsReplacement, current.what, current.useInstead);
+            result += renderTemplate(
+                (WARNING_MESSAGES as any).deprecatedOptionsReplacement,
+                current.what,
+                current.useInstead
+            );
 
             return result;
         }, '');
 
-        Configuration._showConsoleWarning(renderTemplate(WARNING_MESSAGES.deprecatedOptionsAreUsed, replacements));
+        Configuration._showConsoleWarning(
+            renderTemplate(
+                (WARNING_MESSAGES as any).deprecatedOptionsAreUsed,
+                replacements
+            )
+        );
     }
 
     public get startOptions (): TestCafeStartOptions {
@@ -140,8 +161,8 @@ export default class TestCafeConfiguration extends Configuration {
             options: {
                 ssl:             this.getOption('ssl') as string,
                 developmentMode: this.getOption('developmentMode') as boolean,
-                retryTestPages:  this.getOption('retryTestPages') as boolean
-            }
+                retryTestPages:  this.getOption('retryTestPages') as boolean,
+            },
         };
 
         if (result.options.retryTestPages)
@@ -151,7 +172,11 @@ export default class TestCafeConfiguration extends Configuration {
     }
 
     private _prepareFlag (name: string): void {
-        const option = this._ensureOption(name, void 0, OptionSource.Configuration);
+        const option = this._ensureOption(
+            name,
+            void 0,
+            OptionSource.Configuration
+        );
 
         option.value = !!option.value;
     }
@@ -175,35 +200,48 @@ export default class TestCafeConfiguration extends Configuration {
     }
 
     private _prepareFilterFn (): void {
-        const filterOption = this._ensureOption(OPTION_NAMES.filter, null, OptionSource.Configuration);
+        const filterOption = this._ensureOption(
+            OPTION_NAMES.filter,
+            null,
+            OptionSource.Configuration
+        );
 
-        if (!filterOption.value)
-            return;
+        if (!filterOption.value) return;
 
         const filterOptionValue = filterOption.value as FilterOption;
 
-        if (filterOptionValue.testGrep)
-            filterOptionValue.testGrep = getGrepOptions(OPTION_NAMES.filterTestGrep, filterOptionValue.testGrep as string);
+        if (filterOptionValue.testGrep) {
+            filterOptionValue.testGrep = getGrepOptions(
+                OPTION_NAMES.filterTestGrep,
+                filterOptionValue.testGrep as string
+            );
+        }
 
-        if (filterOptionValue.fixtureGrep)
-            filterOptionValue.fixtureGrep = getGrepOptions(OPTION_NAMES.filterFixtureGrep, filterOptionValue.fixtureGrep as string);
+        if (filterOptionValue.fixtureGrep) {
+            filterOptionValue.fixtureGrep = getGrepOptions(
+                OPTION_NAMES.filterFixtureGrep,
+                filterOptionValue.fixtureGrep as string
+            );
+        }
 
         filterOption.value = getFilterFn(filterOption.value) as Function;
     }
 
     private _ensureScreenshotPath (): void {
-        const path        = resolvePathRelativelyCwd(DEFAULT_SCREENSHOTS_DIRECTORY);
-        const screenshots = this._ensureOption(OPTION_NAMES.screenshots, {}, OptionSource.Configuration).value as Dictionary<string>;
+        const path = resolvePathRelativelyCwd(DEFAULT_SCREENSHOTS_DIRECTORY);
+        const screenshots = this._ensureOption(
+            OPTION_NAMES.screenshots,
+            {},
+            OptionSource.Configuration
+        ).value as Dictionary<string>;
 
-        if (!screenshots.path)
-            screenshots.path = path;
+        if (!screenshots.path) screenshots.path = path;
     }
 
     private _prepareReporters (): void {
         const reporterOption = this._options[OPTION_NAMES.reporter];
 
-        if (!reporterOption)
-            return;
+        if (!reporterOption) return;
 
         const optionValue = castArray(reporterOption.value as ReporterOption);
 
@@ -213,42 +251,91 @@ export default class TestCafeConfiguration extends Configuration {
     private async _prepareSslOptions (): Promise<void> {
         const sslOptions = this._options[OPTION_NAMES.ssl];
 
-        if (!sslOptions)
-            return;
+        if (!sslOptions) return;
 
-        sslOptions.value = await getSSLOptions(sslOptions.value as string) as Dictionary<string | boolean | number>;
+        sslOptions.value = (await getSSLOptions(
+            sslOptions.value as string
+        )) as Dictionary<string | boolean | number>;
     }
 
     private _setDefaultValues (): void {
-        this._ensureOptionWithValue(OPTION_NAMES.selectorTimeout, DEFAULT_TIMEOUT.selector, OptionSource.Configuration);
-        this._ensureOptionWithValue(OPTION_NAMES.assertionTimeout, DEFAULT_TIMEOUT.assertion, OptionSource.Configuration);
-        this._ensureOptionWithValue(OPTION_NAMES.pageLoadTimeout, DEFAULT_TIMEOUT.pageLoad, OptionSource.Configuration);
-        this._ensureOptionWithValue(OPTION_NAMES.speed, DEFAULT_SPEED_VALUE, OptionSource.Configuration);
-        this._ensureOptionWithValue(OPTION_NAMES.appInitDelay, DEFAULT_APP_INIT_DELAY, OptionSource.Configuration);
-        this._ensureOptionWithValue(OPTION_NAMES.concurrency, DEFAULT_CONCURRENCY_VALUE, OptionSource.Configuration);
-        this._ensureOptionWithValue(OPTION_NAMES.src, DEFAULT_SOURCE_DIRECTORIES, OptionSource.Configuration);
-        this._ensureOptionWithValue(OPTION_NAMES.developmentMode, DEFAULT_DEVELOPMENT_MODE, OptionSource.Configuration);
-        this._ensureOptionWithValue(OPTION_NAMES.retryTestPages, DEFAULT_RETRY_TEST_PAGES, OptionSource.Configuration);
+        this._ensureOptionWithValue(
+            OPTION_NAMES.selectorTimeout,
+            DEFAULT_TIMEOUT.selector,
+            OptionSource.Configuration
+        );
+        this._ensureOptionWithValue(
+            OPTION_NAMES.assertionTimeout,
+            DEFAULT_TIMEOUT.assertion,
+            OptionSource.Configuration
+        );
+        this._ensureOptionWithValue(
+            OPTION_NAMES.pageLoadTimeout,
+            DEFAULT_TIMEOUT.pageLoad,
+            OptionSource.Configuration
+        );
+        this._ensureOptionWithValue(
+            OPTION_NAMES.speed,
+            DEFAULT_SPEED_VALUE,
+            OptionSource.Configuration
+        );
+        this._ensureOptionWithValue(
+            OPTION_NAMES.appInitDelay,
+            DEFAULT_APP_INIT_DELAY,
+            OptionSource.Configuration
+        );
+        this._ensureOptionWithValue(
+            OPTION_NAMES.concurrency,
+            DEFAULT_CONCURRENCY_VALUE,
+            OptionSource.Configuration
+        );
+        this._ensureOptionWithValue(
+            OPTION_NAMES.src,
+            DEFAULT_SOURCE_DIRECTORIES,
+            OptionSource.Configuration
+        );
+        this._ensureOptionWithValue(
+            OPTION_NAMES.developmentMode,
+            DEFAULT_DEVELOPMENT_MODE,
+            OptionSource.Configuration
+        );
+        this._ensureOptionWithValue(
+            OPTION_NAMES.retryTestPages,
+            DEFAULT_RETRY_TEST_PAGES,
+            OptionSource.Configuration
+        );
 
         this._ensureScreenshotPath();
     }
 
     private _prepareCompilerOptions (): void {
-        const compilerOptions = this._ensureOption(OPTION_NAMES.compilerOptions, getDefaultCompilerOptions(), OptionSource.Configuration);
+        const compilerOptions = this._ensureOption(
+            OPTION_NAMES.compilerOptions,
+            getDefaultCompilerOptions(),
+            OptionSource.Configuration
+        );
 
-        compilerOptions.value = compilerOptions.value || getDefaultCompilerOptions();
+        compilerOptions.value =
+            compilerOptions.value || getDefaultCompilerOptions();
 
         const tsConfigPath = this.getOption(OPTION_NAMES.tsConfigPath);
 
         if (tsConfigPath) {
-            const compilerOptionValue     = compilerOptions.value as CompilerOptions;
-            let typeScriptCompilerOptions = compilerOptionValue[CustomizableCompilers.typescript] as TypeScriptCompilerOptions;
+            const compilerOptionValue = compilerOptions.value as CompilerOptions;
+            let typeScriptCompilerOptions = compilerOptionValue[
+                CustomizableCompilers.typescript
+            ] as TypeScriptCompilerOptions;
 
-            typeScriptCompilerOptions = Object.assign({
-                configPath: tsConfigPath
-            }, typeScriptCompilerOptions);
+            typeScriptCompilerOptions = Object.assign(
+                {
+                    configPath: tsConfigPath,
+                },
+                typeScriptCompilerOptions
+            );
 
-            (compilerOptions.value as CompilerOptions)[CustomizableCompilers.typescript] = typeScriptCompilerOptions;
+            (compilerOptions.value as CompilerOptions)[
+                CustomizableCompilers.typescript
+            ] = typeScriptCompilerOptions;
         }
     }
 
