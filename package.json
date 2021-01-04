@@ -50,7 +50,7 @@
   ],
   "scripts": {
     "test": "gulp travis",
-    "publish-please": "npm i && publish-please",
+    "publish-please": "publish-please",
     "prepublishOnly": "publish-please guard"
   },
   "dependencies": {
