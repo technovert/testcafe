@@ -80,7 +80,7 @@ async function createTestCafe(...args) {
 
   configuration.mergeOptions({ hostname, port1, port2 });
 
-  const testcafe = new TestCafe.default(configuration, proxy);
+  const testcafe = new TestCafe(configuration, proxy);
 
   setupExitHook((cb) => testcafe.close().then(cb));
 

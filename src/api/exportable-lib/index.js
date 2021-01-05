@@ -28,7 +28,7 @@ function RequestLogger(requestFilterRuleInit, logOptions) {
 }
 
 function ClientFunction(fn, options) {
-  const builder = new ClientFunctionBuilder.default(fn, options, {
+  const builder = new ClientFunctionBuilder(fn, options, {
     instantiation: "ClientFunction",
   });
 
@@ -36,7 +36,7 @@ function ClientFunction(fn, options) {
 }
 
 function Selector(fn, options) {
-  const builder = new SelectorBuilder.default(fn, options, {
+  const builder = new SelectorBuilder(fn, options, {
     instantiation: "Selector",
   });
 

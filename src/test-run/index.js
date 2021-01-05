@@ -105,7 +105,7 @@ export default class TestRun extends AsyncEventEmitter {
       test.disablePageCaching || opts.disablePageCaching;
     this.allowMultipleWindows = opts.allowMultipleWindows;
 
-    this.session = SessionController.default.getSession(this);
+    this.session = SessionController.getSession(this);
 
     this.consoleMessages = new BrowserConsoleMessages();
 
@@ -134,7 +134,7 @@ export default class TestRun extends AsyncEventEmitter {
     this.disableDebugBreakpoints = false;
     this.debugReporterPluginHost = new ReporterPluginHost({ noColors: false });
 
-    this.browserManipulationQueue = new BrowserManipulationQueue.default(
+    this.browserManipulationQueue = new BrowserManipulationQueue(
       browserConnection,
       screenshotCapturer,
       this.warningLog

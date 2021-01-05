@@ -52,7 +52,7 @@ export default class TestCafe {
         options
       );
     // }
-    this.browserConnectionGateway = new BrowserConnectionGateway.default(
+    this.browserConnectionGateway = new BrowserConnectionGateway(
       this.proxy,
       { retryTestPages: configuration.getOption(OPTION_NAMES.retryTestPages) }
     );
@@ -62,7 +62,7 @@ export default class TestCafe {
     this.compilerService = configuration.getOption(
       OPTION_NAMES.experimentalCompilerService
     )
-      ? new CompilerHost.default()
+      ? new CompilerHost()
       : void 0;
 
     this._registerAssets(options.developmentMode);
@@ -79,7 +79,7 @@ export default class TestCafe {
       uiSpriteSvg,
       automationScript,
       legacyRunnerScript,
-    } = loadAssets.default(developmentMode);
+    } = loadAssets(developmentMode);
 
     this.proxy.GET(INJECTABLES.TESTCAFE_CORE, {
       content: coreScript,
@@ -133,7 +133,7 @@ export default class TestCafe {
 
   _createRunner(isLiveMode) {
     const Ctor = isLiveMode ? LiveModeRunner : Runner;
-    const newRunner = new Ctor.default(
+    const newRunner = new Ctor(
       this.proxy,
       this.browserConnectionGateway,
       this.configuration.clone(),
@@ -176,7 +176,7 @@ export default class TestCafe {
 
     await Promise.all(this.runners.map((runner) => runner.stop()));
 
-    await browserProviderPool.default.dispose();
+    await browserProviderPool.dispose();
 
     if (this.compilerService) this.compilerService.stop();
 
