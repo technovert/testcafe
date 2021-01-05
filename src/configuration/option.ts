@@ -1,4 +1,5 @@
 import OptionSource from './option-source';
+import { OptionValue } from './types';
 
 export default class Option {
     public name: string;

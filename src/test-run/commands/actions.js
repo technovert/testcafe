@@ -3,14 +3,7 @@ import SelectorBuilder from '../../client-functions/selectors/selector-builder';
 import ClientFunctionBuilder from '../../client-functions/client-function-builder';
 import functionBuilderSymbol from '../../client-functions/builder-symbol';
 import CommandBase from './base';
-import {
-    ActionOptions,
-    ClickOptions,
-    MouseOptions,
-    TypeOptions,
-    DragToElementOptions
-} from './options';
-
+import { ActionOptions, ClickOptions, MouseOptions, TypeOptions, DragToElementOptions } from './options';
 import { initSelector, initUploadSelector } from './validations/initializers';
 import { executeJsExpression } from '../execute-js-expression';
 import { isJSExpression } from './utils';
@@ -26,8 +19,7 @@ import {
     stringOrStringArrayArgument,
     setSpeedArgument,
     actionRoleArgument,
-    booleanArgument,
-    functionArgument
+    booleanArgument
 } from './validations/argument';
 
 import { SetNativeDialogHandlerCodeWrongTypeError } from '../../errors/test-run';
@@ -82,6 +74,16 @@ function initDialogHandler (name, val, { skipVisibilityCheck, testRun }) {
         builder = fn.with(options)[functionBuilderSymbol];
     else
         builder = new ClientFunctionBuilder(fn, options, { instantiation: methodName, execution: methodName });
+
+    return builder.getCommand([]);
+}
+
+function initSwitchToWindowHandler (name, val) {
+    const fn      = val.fn;
+    const options = val.options;
+
+    const methodName = 'switchToWindowHandler';
+    const builder    = new ClientFunctionBuilder(fn, options, { instantiation: methodName, execution: methodName });
 
     return builder.getCommand([]);
 }
@@ -359,17 +361,6 @@ export class GetCurrentWindowCommand extends CommandBase {
     }
 }
 
-export class GetCurrentWindowsCommand extends CommandBase {
-    constructor (obj, testRun) {
-        super(obj, testRun, TYPE.getCurrentWindows);
-    }
-
-    _getAssignableProperties () {
-        return [
-        ];
-    }
-}
-
 
 export class SwitchToWindowCommand extends CommandBase {
     constructor (obj, testRun) {
@@ -390,7 +381,7 @@ export class SwitchToWindowByPredicateCommand extends CommandBase {
 
     _getAssignableProperties () {
         return [
-            { name: 'findWindow', type: functionArgument, required: true }
+            { name: 'findWindow', init: initSwitchToWindowHandler, required: true }
         ];
     }
 }

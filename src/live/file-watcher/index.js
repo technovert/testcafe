@@ -1,14 +1,10 @@
 import EventEmitter from 'events';
 import fs from 'fs';
 import ModulesGraph from './modules-graph';
-import NODE_MODULES from '../../shared/node-modules-folder-name';
-import toPosixPath from '../../utils/to-posix-path';
 
 const WATCH_LOCKED_TIMEOUT = 700;
 
 let instance = null;
-
-const BABEL_PRESET_STAGE_2_MODULE_PATH = 'lib/compiler/babel/preset-stage-2.js';
 
 export default class FileWatcher extends EventEmitter {
     constructor () {
@@ -62,19 +58,13 @@ export default class FileWatcher extends EventEmitter {
     }
 
     addFile (controller, file) {
-        if (this.watchers[file] || !FileWatcher.shouldWatchFile(file))
-            return;
+        if (!this.watchers[file] && file.indexOf('node_modules') < 0) {
+            if (this.modulesGraph) {
+                this.lastChangedFiles.push(file);
+                this.modulesGraph.addNode(file, require.cache);
+            }
 
-        if (this.modulesGraph) {
-            this.lastChangedFiles.push(file);
-            this.modulesGraph.addNode(file, require.cache);
+            this.watchers[file] = fs.watch(file, () => this._watch(controller, file));
         }
-
-        this.watchers[file] = fs.watch(file, () => this._watch(controller, file));
-    }
-
-    static shouldWatchFile (file) {
-        return !file.includes(NODE_MODULES) &&
-            !toPosixPath(file).includes(BABEL_PRESET_STAGE_2_MODULE_PATH);
     }
 }

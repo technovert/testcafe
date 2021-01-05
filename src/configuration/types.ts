@@ -1,15 +1,12 @@
-type TemplateArguments = any[];
+/* eslint-disable @typescript-eslint/no-explicit-any */
+export type TemplateArguments = any[];
 
-interface ScreenshotOptionValue {
+export interface ScreenshotOptionValue {
     path: string;
     takeOnFails?: boolean;
     pathPattern?: string;
     fullPage?: boolean;
 }
 
-interface CompilerOptions {
-    [key: string]: object;
-}
-
-type OptionValue = undefined | null | string | boolean | number | string[] | Function | { [key: string]: any } | ScreenshotOptionValue | CompilerOptions;
+export type OptionValue = undefined | null | string | boolean | number | string[] | Function | { [key: string]: any } | ScreenshotOptionValue;
 

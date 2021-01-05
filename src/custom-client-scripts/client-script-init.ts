@@ -1,3 +1,4 @@
+// @ts-ignore Could not find a declaration file for module 'testcafe-hammerhead'
 import { RequestFilterRule } from 'testcafe-hammerhead';
 
 interface ClientScriptInit {

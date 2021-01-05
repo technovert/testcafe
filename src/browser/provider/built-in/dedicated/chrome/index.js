@@ -4,8 +4,8 @@ import dedicatedProviderBase from '../base';
 import ChromeRunTimeInfo from './runtime-info';
 import getConfig from './config';
 import { start as startLocalChrome, stop as stopLocalChrome } from './local-chrome';
+import * as cdp from './cdp';
 import { GET_WINDOW_DIMENSIONS_INFO_SCRIPT } from '../../../utils/client-functions';
-import { BrowserClient } from './browser-client';
 
 const MIN_AVAILABLE_DIMENSION = 50;
 
@@ -16,12 +16,12 @@ export default {
         return getConfig(name);
     },
 
-    _getBrowserProtocolClient (runtimeInfo) {
-        return runtimeInfo.browserClient;
+    _getBrowserProtocolClient () {
+        return cdp;
     },
 
-    async _createRunTimeInfo (hostName, configString, disableMultipleWindows) {
-        return ChromeRunTimeInfo.create(hostName, configString, disableMultipleWindows);
+    async _createRunTimeInfo (hostName, configString, allowMultipleWindows) {
+        return ChromeRunTimeInfo.create(hostName, configString, allowMultipleWindows);
     },
 
     _setUserAgentMetaInfoForEmulatingDevice (browserId, config) {
@@ -39,9 +39,9 @@ export default {
         this.setUserAgentMetaInfo(browserId, metaInfo, options);
     },
 
-    async openBrowser (browserId, pageUrl, configString, disableMultipleWindows) {
+    async openBrowser (browserId, pageUrl, configString, allowMultipleWindows) {
         const parsedPageUrl = parseUrl(pageUrl);
-        const runtimeInfo   = await this._createRunTimeInfo(parsedPageUrl.hostname, configString, disableMultipleWindows);
+        const runtimeInfo   = await this._createRunTimeInfo(parsedPageUrl.hostname, configString, allowMultipleWindows);
 
         runtimeInfo.browserName = this._getBrowserName();
         runtimeInfo.browserId   = browserId;
@@ -54,18 +54,15 @@ export default {
 
         await this.waitForConnectionReady(browserId);
 
-        runtimeInfo.viewportSize      = await this.runInitScript(browserId, GET_WINDOW_DIMENSIONS_INFO_SCRIPT);
-        runtimeInfo.activeWindowId    = null;
-        runtimeInfo.windowDescriptors = {};
+        runtimeInfo.viewportSize   = await this.runInitScript(browserId, GET_WINDOW_DIMENSIONS_INFO_SCRIPT);
+        runtimeInfo.activeWindowId = null;
 
-        if (!disableMultipleWindows)
+        if (allowMultipleWindows)
             runtimeInfo.activeWindowId = this.calculateWindowId();
 
-        const browserClient = new BrowserClient(runtimeInfo);
+        await cdp.createClient(runtimeInfo);
 
         this.openedBrowsers[browserId] = runtimeInfo;
-
-        await browserClient.init();
 
         await this._ensureWindowIsExpanded(browserId, runtimeInfo.viewportSize);
 
@@ -75,8 +72,8 @@ export default {
     async closeBrowser (browserId) {
         const runtimeInfo = this.openedBrowsers[browserId];
 
-        if (runtimeInfo.browserClient.isHeadlessTab())
-            await runtimeInfo.browserClient.closeTab();
+        if (cdp.isHeadlessTab(runtimeInfo))
+            await cdp.closeTab(runtimeInfo);
         else
             await this.closeLocalBrowser(browserId);
 
@@ -93,24 +90,21 @@ export default {
         const runtimeInfo = this.openedBrowsers[browserId];
 
         if (runtimeInfo.config.mobile)
-            await runtimeInfo.browserClient.updateMobileViewportSize();
+            await cdp.updateMobileViewportSize(runtimeInfo);
         else {
             runtimeInfo.viewportSize.width  = currentWidth;
             runtimeInfo.viewportSize.height = currentHeight;
         }
 
-        await runtimeInfo.browserClient.resizeWindow({ width, height });
+        await cdp.resizeWindow({ width, height }, runtimeInfo);
     },
 
     async getVideoFrameData (browserId) {
-        const { browserClient } = this.openedBrowsers[browserId];
-
-        return browserClient.getScreenshotData();
+        return await cdp.getScreenshotData(this.openedBrowsers[browserId]);
     },
 
     async hasCustomActionForBrowser (browserId) {
-        const { config, browserClient } = this.openedBrowsers[browserId];
-        const client                    = await browserClient.getActiveClient();
+        const { config, client } = this.openedBrowsers[browserId];
 
         return {
             hasCloseBrowser:                true,

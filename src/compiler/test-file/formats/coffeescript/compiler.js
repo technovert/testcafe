@@ -1,5 +1,5 @@
 import CoffeeScript from 'coffeescript';
-import loadBabelLibs from '../../../babel/load-libs';
+import loadBabelLibs from '../../../load-babel-libs';
 import ESNextTestFileCompiler from '../es-next/compiler.js';
 
 const FIXTURE_RE = /(^|;|\s+)fixture\s*(\.|\(|'|")/;

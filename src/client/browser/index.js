@@ -1,13 +1,15 @@
-/* eslint-disable no-restricted-globals */
+// TODO: once we'll have client commons load it from there instead of node modules (currently it's leads to two copies of this packages on client)
+// TODO: Get rid of Pinkie after dropping IE11
 import COMMAND from '../../browser/connection/command';
 import HeartbeatStatus from '../../browser/connection/heartbeat-status';
+import { UNSTABLE_NETWORK_MODE_HEADER } from '../../browser/connection/unstable-network-mode';
 import { HEARTBEAT_INTERVAL } from '../../utils/browser-connection-timeouts';
 
 let allowInitScriptExecution = false;
-let retryTestPages = false;
-let heartbeatIntervalId = null;
+let retryTestPages           = false;
+let heartbeatIntervalId      = null;
 
-const noop = () => void 0;
+const noop  = () => void 0;
 const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
 
 const evaluate = eval; // eslint-disable-line no-eval
@@ -18,11 +20,7 @@ const FETCH_PAGE_TO_CACHE_RETRY_COUNT = 5;
 //Utils
 // NOTE: the window.XMLHttpRequest may have been wrapped by Hammerhead, while we should send a request to
 // the original URL. That's why we need the XMLHttpRequest argument to send the request via native methods.
-export function sendXHR (
-    url,
-    createXHR,
-    { method = 'GET', data = null, parseResponse = true } = {}
-) {
+export function sendXHR (url, createXHR, { method = 'GET', data = null, parseResponse = true } = {}) {
     return new Promise((resolve, reject) => {
         const xhr = createXHR();
 
@@ -30,10 +28,7 @@ export function sendXHR (
 
         if (isRetryingTestPagesEnabled()) {
             xhr.setRequestHeader(UNSTABLE_NETWORK_MODE_HEADER, 'true');
-            xhr.setRequestHeader(
-                'accept',
-                'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8'
-            );
+            xhr.setRequestHeader('accept', 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8');
         }
 
         xhr.onreadystatechange = () => {
@@ -46,7 +41,8 @@ export function sendXHR (
 
                     resolve(responseText);
                 }
-                else reject('disconnected');
+                else
+                    reject('disconnected');
             }
         };
 
@@ -60,18 +56,17 @@ function isCurrentLocation (url) {
     /*eslint-enable no-restricted-properties*/
 }
 
+
 //API
 export function startHeartbeat (heartbeatUrl, createXHR) {
     function heartbeat () {
-        sendXHR(heartbeatUrl, createXHR).then(status => {
-            if (
-                status.code === HeartbeatStatus.closing &&
-                !isCurrentLocation(status.url)
-            ) {
-                stopInitScriptExecution();
-                document.location = status.url;
-            }
-        });
+        sendXHR(heartbeatUrl, createXHR)
+            .then(status => {
+                if (status.code === HeartbeatStatus.closing && !isCurrentLocation(status.url)) {
+                    stopInitScriptExecution();
+                    document.location = status.url;
+                }
+            });
     }
 
     heartbeatIntervalId = window.setInterval(heartbeat, HEARTBEAT_INTERVAL);
@@ -84,22 +79,18 @@ export function stopHeartbeat () {
 }
 
 function executeInitScript (initScriptUrl, createXHR) {
-    if (!allowInitScriptExecution) return;
+    if (!allowInitScriptExecution)
+        return;
 
     sendXHR(initScriptUrl, createXHR)
         .then(res => {
-            if (!res.code) return null;
+            if (!res.code)
+                return null;
 
-            return sendXHR(initScriptUrl, createXHR, {
-                method: 'POST',
-                data:   JSON.stringify(evaluate(res.code)),
-            }); //eslint-disable-line no-restricted-globals
+            return sendXHR(initScriptUrl, createXHR, { method: 'POST', data: JSON.stringify(evaluate(res.code)) }); //eslint-disable-line no-restricted-globals
         })
         .then(() => {
-            window.setTimeout(
-                () => executeInitScript(initScriptUrl, createXHR),
-                1000
-            );
+            window.setTimeout(() => executeInitScript(initScriptUrl, createXHR), 1000);
         });
 }
 
@@ -119,10 +110,8 @@ export function redirect (command) {
 }
 
 export function fetchPageToCache (pageUrl, createXHR) {
-    const requestAttempt = () =>
-        sendXHR(pageUrl, createXHR, { parseResponse: false });
-    const retryRequest = () =>
-        delay(FETCH_PAGE_TO_CACHE_RETRY_DELAY).then(requestAttempt);
+    const requestAttempt = () => sendXHR(pageUrl, createXHR, { parseResponse: false });
+    const retryRequest   = () => delay(FETCH_PAGE_TO_CACHE_RETRY_DELAY).then(requestAttempt);
 
     let fetchPagePromise = requestAttempt();
 
@@ -145,11 +134,10 @@ export function checkStatus (statusUrl, createXHR, opts) {
             return ensurePagePromise.then(() => result);
         })
         .then(result => {
-            const redirecting =
-                (result.cmd === COMMAND.run || result.cmd === COMMAND.idle) &&
-                !isCurrentLocation(result.url);
+            const redirecting = (result.cmd === COMMAND.run || result.cmd === COMMAND.idle) && !isCurrentLocation(result.url);
 
-            if (redirecting && !manualRedirect) redirect(result);
+            if (redirecting && !manualRedirect)
+                redirect(result);
 
             return { command: result, redirecting };
         });
@@ -174,6 +162,6 @@ export function getActiveWindowId (activeWindowIdUrl, createXHR) {
 export function setActiveWindowId (activeWindowIdUrl, createXHR, windowId) {
     return sendXHR(activeWindowIdUrl, createXHR, {
         method: 'POST',
-        data:   JSON.stringify({ windowId }), //eslint-disable-line no-restricted-globals
+        data:   JSON.stringify({ windowId }) //eslint-disable-line no-restricted-globals
     });
 }

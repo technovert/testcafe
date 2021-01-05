@@ -12,6 +12,7 @@ import FixtureHookController from './fixture-hook-controller';
 import { Dictionary } from '../configuration/interfaces';
 import { ActionEventArg } from './interfaces';
 import TestRunErrorFormattableAdapter from '../errors/test-run/formattable-adapter';
+import { OptionValue } from '../configuration/types';
 
 const QUARANTINE_THRESHOLD = 3;
 const DISCONNECT_THRESHOLD = 3;

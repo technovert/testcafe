@@ -6,23 +6,10 @@ import { RUNTIME_ERRORS } from '../../errors/types';
 const METHODS_SPECIFYING_NAME = ['only', 'skip'];
 const COMPUTED_NAME_TEXT_TMP  = '<computed name>(line: %s)';
 
-function getLoc (loc) {
-    // NOTE: Don't modify the Babel's parser data structure
-    const locCopy = Object.assign({}, loc);
-
-    // NOTE: 'fileName' and 'identifierName' fields with 'undefined' values added in the SourceLocation class constructor.
-    // https://github.com/babel/babel/blob/d51aa6d76177b544590cdfe3868f9f4d33d8813d/packages/babel-parser/src/util/location.js#L22
-    // Since this is useless information, we remove it.
-    delete locCopy.filename;
-    delete locCopy.identifierName;
-
-    return locCopy;
-}
-
 export class Fixture {
     constructor (name, start, end, loc, meta) {
         this.name  = name;
-        this.loc   = getLoc(loc);
+        this.loc   = loc;
         this.start = start;
         this.end   = end;
         this.meta  = meta;
@@ -33,7 +20,7 @@ export class Fixture {
 export class Test {
     constructor (name, start, end, loc, meta) {
         this.name  = name;
-        this.loc   = getLoc(loc);
+        this.loc   = loc;
         this.start = start;
         this.end   = end;
         this.meta  = meta;

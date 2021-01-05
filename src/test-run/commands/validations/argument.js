@@ -19,12 +19,11 @@ import {
     ActionStringOrStringArrayArgumentError,
     ActionStringArrayElementError,
     ActionUnsupportedDeviceTypeError,
-    ActionFunctionArgumentError,
     SetTestSpeedArgumentError,
     ForbiddenCharactersInScreenshotPathError
 } from '../../../errors/test-run';
 
-import { assertPageUrl } from '../../../api/test-page-url';
+import { assertUrl } from '../../../api/test-page-url';
 import checkFilePath from '../../../utils/check-file-path';
 
 
@@ -78,7 +77,7 @@ export function nullableStringArgument (argument, val) {
 export function urlArgument (name, val) {
     nonEmptyStringArgument(name, val);
 
-    assertPageUrl(val.trim(), 'navigateTo');
+    assertUrl(val.trim(), 'navigateTo');
 }
 
 export function stringOrStringArrayArgument (argument, val) {
@@ -121,9 +120,4 @@ export function screenshotPathArgument (name, val) {
 
     if (forbiddenCharsList.length)
         throw new ForbiddenCharactersInScreenshotPathError(val, forbiddenCharsList);
-}
-
-export function functionArgument (name, val) {
-    if (typeof val !== 'function')
-        throw new ActionFunctionArgumentError(name, val);
 }

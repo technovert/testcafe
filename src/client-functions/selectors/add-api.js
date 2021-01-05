@@ -1,4 +1,3 @@
-import { inspect } from 'util';
 import { assign, pull as remove } from 'lodash';
 import clientFunctionBuilderSymbol from '../builder-symbol';
 import { SNAPSHOT_PROPERTIES } from './snapshot-properties';
@@ -10,10 +9,8 @@ import makeRegExp from '../../utils/make-reg-exp';
 import selectorTextFilter from './selector-text-filter';
 import selectorAttributeFilter from './selector-attribute-filter';
 import prepareApiFnArgs from './prepare-api-args';
-import { getCallsiteId } from '../../utils/callsite';
 
-const VISIBLE_PROP_NAME       = 'visible';
-const SNAPSHOT_PROP_PRIMITIVE = `[object ${ReExecutablePromise.name}]`;
+const VISIBLE_PROP_NAME = 'visible';
 
 const filterNodes = (new ClientFunctionBuilder((nodes, filter, querySelectorRoot, originNode, ...filterArgs) => {
     if (typeof filter === 'number') {
@@ -25,8 +22,8 @@ const filterNodes = (new ClientFunctionBuilder((nodes, filter, querySelectorRoot
     const result = [];
 
     if (typeof filter === 'string') {
-        // NOTE: we can search for elements only in document/element/shadow root.
-        if (querySelectorRoot.nodeType !== 1 && querySelectorRoot.nodeType !== 9 && querySelectorRoot.nodeType !== 11)
+        // NOTE: we can search for elements only in document or element.
+        if (querySelectorRoot.nodeType !== 1 && querySelectorRoot.nodeType !== 9)
             return null;
 
         const matching    = querySelectorRoot.querySelectorAll(filter);
@@ -110,60 +107,17 @@ function getDerivativeSelectorArgs (options, selectorFn, apiFn, filter, addition
     return Object.assign({}, options, { selectorFn, apiFn, filter, additionalDependencies });
 }
 
-function createPrimitiveGetterWrapper (observedCallsites, callsite) {
-    return () => {
-        if (observedCallsites)
-            observedCallsites.unawaitedSnapshotCallsites.add(callsite);
-
-        return SNAPSHOT_PROP_PRIMITIVE;
-    };
-}
-
-function checkForExcessiveAwaits (snapshotPropertyCallsites, checkedCallsite) {
-    const callsiteId = getCallsiteId(checkedCallsite);
-
-    // NOTE: If there is an asserted callsite, it means that .expect() was already called.
-    // We don't raise a warning and delete the callsite.
-    if (snapshotPropertyCallsites[callsiteId] && snapshotPropertyCallsites[callsiteId].checked)
-        delete snapshotPropertyCallsites[callsiteId];
-    // NOTE: If the calliste already exists, but is not asserted, it means that there are
-    // multiple awaited callsites in one assertion. We raise a warning for each of them.
-    else if (snapshotPropertyCallsites[callsiteId] && !snapshotPropertyCallsites[callsiteId].checked)
-        snapshotPropertyCallsites[callsiteId].callsites.push(checkedCallsite);
-    else
-        snapshotPropertyCallsites[callsiteId] = { callsites: [ checkedCallsite ], checked: false };
-}
-
-function addSnapshotProperties (obj, getSelector, SelectorBuilder, properties, observedCallsites) {
+function addSnapshotProperties (obj, getSelector, SelectorBuilder, properties) {
     properties.forEach(prop => {
         Object.defineProperty(obj, prop, {
             get: () => {
                 const callsite = getCallsiteForMethod('get');
 
-                const propertyPromise = ReExecutablePromise.fromFn(async () => {
+                return ReExecutablePromise.fromFn(async () => {
                     const snapshot = await getSnapshot(getSelector, callsite, SelectorBuilder);
 
                     return snapshot[prop];
                 });
-
-                const primitiveGetterWrapper = createPrimitiveGetterWrapper(observedCallsites, callsite);
-
-                propertyPromise[Symbol.toPrimitive] = primitiveGetterWrapper;
-                propertyPromise[inspect.custom]     = primitiveGetterWrapper;
-
-                propertyPromise.then = function (onFulfilled, onRejected) {
-                    if (observedCallsites) {
-                        checkForExcessiveAwaits(observedCallsites.snapshotPropertyCallsites, callsite);
-
-                        observedCallsites.unawaitedSnapshotCallsites.delete(callsite);
-                    }
-
-                    this._ensureExecuting();
-
-                    return this._taskPromise.then(onFulfilled, onRejected);
-                };
-
-                return propertyPromise;
             }
         });
     });
@@ -241,10 +195,10 @@ function prepareSnapshotPropertyList (customDOMProperties) {
     return properties;
 }
 
-function addSnapshotPropertyShorthands ({ obj, getSelector, SelectorBuilder, customDOMProperties, customMethods, observedCallsites }) {
+function addSnapshotPropertyShorthands ({ obj, getSelector, SelectorBuilder, customDOMProperties, customMethods }) {
     const properties = prepareSnapshotPropertyList(customDOMProperties);
 
-    addSnapshotProperties(obj, getSelector, SelectorBuilder, properties, observedCallsites);
+    addSnapshotProperties(obj, getSelector, SelectorBuilder, properties);
     addCustomMethods(obj, getSelector, SelectorBuilder, customMethods);
 
     obj.getStyleProperty = prop => {
@@ -762,27 +716,10 @@ function addHierarchicalSelectors (options) {
 
         return createDerivativeSelectorWithFilter(args);
     };
-
-    // ShadowRoot
-    obj.shadowRoot = () => {
-        const apiFn = prepareApiFnArgs('shadowRoot');
-
-        const selectorFn = () => {
-            /* eslint-disable no-undef */
-            return expandSelectorResults(selector, node => {
-                return !node.shadowRoot ? null : [node.shadowRoot];
-            });
-            /* eslint-enable no-undef */
-        };
-
-        const args = getDerivativeSelectorArgs(options, selectorFn, apiFn, void 0, { expandSelectorResults });
-
-        return createDerivativeSelectorWithFilter(args);
-    };
 }
 
-export function addAPI (selector, getSelector, SelectorBuilder, customDOMProperties, customMethods, observedCallsites) {
-    const options = { obj: selector, getSelector, SelectorBuilder, customDOMProperties, customMethods, observedCallsites };
+export function addAPI (selector, getSelector, SelectorBuilder, customDOMProperties, customMethods) {
+    const options = { obj: selector, getSelector, SelectorBuilder, customDOMProperties, customMethods };
 
     addFilterMethods(options);
     addHierarchicalSelectors(options);

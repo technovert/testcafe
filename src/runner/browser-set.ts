@@ -1,12 +1,7 @@
 import { EventEmitter } from 'events';
 import getTimeLimitedPromise from 'time-limit-promise';
 import promisifyEvent from 'promisify-event';
-import {
-    flatten,
-    noop,
-    pull as remove
-} from 'lodash';
-
+import { flatten, noop, pull as remove } from 'lodash';
 // @ts-ignore
 import mapReverse from 'map-reverse';
 import { GeneralError } from '../errors/runtime';

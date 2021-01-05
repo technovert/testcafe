@@ -11,10 +11,10 @@ export default {
     isEnabled: false,
 
     _isStackTraceLine (stackLine) {
-        return STACK_TRACE_LINE_RE.test(stackLine);
+        return stackLine.match(STACK_TRACE_LINE_RE);
     },
 
-    _removeStackTraceLines (error) {
+    _eraseOriginalStack (error) {
         if (!error.stack) {
             error.stack = '';
             return;
@@ -70,11 +70,9 @@ export default {
         if (!frames.length)
             return error;
 
-        this._removeStackTraceLines(error);
+        this._eraseOriginalStack(error);
 
-        const stackFilterFn = createStackFilter(ORIGINAL_STACK_TRACE_LIMIT);
-
-        frames = frames.filter(stackFilterFn);
+        frames = frames.filter(createStackFilter(ORIGINAL_STACK_TRACE_LIMIT));
 
         error.stack += this._renderFrameInfo(frames);
 

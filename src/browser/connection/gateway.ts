@@ -1,19 +1,14 @@
-import loadAssets from '../../load-assets';
-import {
-    respond404,
-    respond500,
-    respondWithJSON,
-    redirect,
-    preventCaching
-} from '../../utils/http';
-
+import { readSync as read } from 'read-file-relative';
+import { respond404, respond500, respondWithJSON, redirect, preventCaching } from '../../utils/http';
 import RemotesQueue from './remotes-queue';
 import { Proxy } from 'testcafe-hammerhead';
 import { Dictionary } from '../../configuration/interfaces';
 import BrowserConnection from './index';
 import { IncomingMessage, ServerResponse } from 'http';
-import SERVICE_ROUTES from './service-routes';
 
+const IDLE_PAGE_SCRIPT = read('../../client/browser/idle-page/index.js');
+const IDLE_PAGE_STYLE  = read('../../client/browser/idle-page/styles.css');
+const IDLE_PAGE_LOGO   = read('../../client/browser/idle-page/logo.svg', true);
 
 export default class BrowserConnectionGateway {
     private _connections: Dictionary<BrowserConnection> = {};
@@ -47,13 +42,6 @@ export default class BrowserConnectionGateway {
     }
 
     private _registerRoutes (proxy: Proxy): void {
-        const {
-            idlePageScript,
-            idlePageStyle,
-            idlePageLogo,
-            serviceWorkerScript
-        } = loadAssets();
-
         this._dispatch('/browser/connect/{id}', proxy, BrowserConnectionGateway._onConnection);
         this._dispatch('/browser/heartbeat/{id}', proxy, BrowserConnectionGateway._onHeartbeat);
         this._dispatch('/browser/idle/{id}', proxy, BrowserConnectionGateway._onIdle);
@@ -65,13 +53,12 @@ export default class BrowserConnectionGateway {
         this._dispatch('/browser/active-window-id/{id}', proxy, BrowserConnectionGateway._onGetActiveWindowIdRequest);
         this._dispatch('/browser/active-window-id/{id}', proxy, BrowserConnectionGateway._onSetActiveWindowIdRequest, 'POST');
 
-        proxy.GET(SERVICE_ROUTES.connect, (req: IncomingMessage, res: ServerResponse) => this._connectNextRemoteBrowser(req, res));
-        proxy.GET(SERVICE_ROUTES.connectWithTrailingSlash, (req: IncomingMessage, res: ServerResponse) => this._connectNextRemoteBrowser(req, res));
+        proxy.GET('/browser/connect', (req: IncomingMessage, res: ServerResponse) => this._connectNextRemoteBrowser(req, res));
+        proxy.GET('/browser/connect/', (req: IncomingMessage, res: ServerResponse) => this._connectNextRemoteBrowser(req, res));
 
-        proxy.GET(SERVICE_ROUTES.serviceWorker, { content: serviceWorkerScript, contentType: 'application/x-javascript' });
-        proxy.GET(SERVICE_ROUTES.assets.index, { content: idlePageScript, contentType: 'application/x-javascript' });
-        proxy.GET(SERVICE_ROUTES.assets.styles, { content: idlePageStyle, contentType: 'text/css' });
-        proxy.GET(SERVICE_ROUTES.assets.logo, { content: idlePageLogo, contentType: 'image/svg+xml' });
+        proxy.GET('/browser/assets/index.js', { content: IDLE_PAGE_SCRIPT, contentType: 'application/x-javascript' });
+        proxy.GET('/browser/assets/styles.css', { content: IDLE_PAGE_STYLE, contentType: 'text/css' });
+        proxy.GET('/browser/assets/logo.svg', { content: IDLE_PAGE_LOGO, contentType: 'image/svg+xml' });
     }
 
     // Helpers

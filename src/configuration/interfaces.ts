@@ -28,7 +28,7 @@ export interface RunnerRunOptions {
     pageLoadTimeout?: number;
     speed?: number;
     stopOnFirstFail?: number;
-    disableMultipleWindows: boolean;
+    allowMultipleWindows: boolean;
 }
 
 export interface GetOptionConfiguration {
@@ -36,11 +36,5 @@ export interface GetOptionConfiguration {
     keyValueSeparator?: string;
     skipOptionValueTypeConversion?: boolean;
     onOptionParsed?: Function;
-}
-
-export interface TypeScriptCompilerOptions {
-    configPath?: string;
-    customCompilerModulePath?: string;
-    options?: Dictionary<boolean | number>;
 }
 

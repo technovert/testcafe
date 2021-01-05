@@ -1,4 +1,4 @@
 export interface CompilerArguments {
     sourceList: string[];
-    compilerOptions?: CompilerOptions;
+    compilerOptions: object;
 }

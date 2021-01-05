@@ -72,7 +72,6 @@ export default class SelectorBuilder extends ClientFunctionBuilder {
 
                         var nodes = __f$.apply(this, args);
                         nodes     = selectorFilter.cast(nodes);
-
                         if (!nodes.length && !selectorFilter.error)
                             selectorFilter.error = __dependencies$.apiInfo.apiFnID;
 
@@ -186,14 +185,7 @@ export default class SelectorBuilder extends ClientFunctionBuilder {
     _decorateFunction (selectorFn) {
         super._decorateFunction(selectorFn);
 
-        addAPI(
-            selectorFn,
-            () => selectorFn,
-            SelectorBuilder,
-            this.options.customDOMProperties,
-            this.options.customMethods,
-            this._getTestRun() ? this._getTestRun().observedCallsites : null
-        );
+        addAPI(selectorFn, () => selectorFn, SelectorBuilder, this.options.customDOMProperties, this.options.customMethods);
     }
 
     _getClientFnWithOverriddenOptions (options) {

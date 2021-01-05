@@ -35,11 +35,7 @@ export default {
     },
 
     async isLocalBrowser (browserId) {
-        // NOTE:
-        // if browserId is not specified, then it means that a browser is not yet started
-        // we may assume that it's not local, because
-        // otherwise we'll just disable window manipulation function's after the browser will be started
-        return !!browserId && this.localBrowsersFlags[browserId];
+        return this.localBrowsersFlags[browserId];
     },
 
     // NOTE: we must try to do a local screenshot or resize, if browser is accessible, and emit warning otherwise

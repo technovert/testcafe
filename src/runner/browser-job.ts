@@ -10,6 +10,7 @@ import WarningLog from '../notifications/warning-log';
 import FixtureHookController from './fixture-hook-controller';
 import { Dictionary } from '../configuration/interfaces';
 import BrowserJobResult from './browser-job-result';
+import { OptionValue } from '../configuration/types';
 
 interface BrowserJobResultInfo {
     status: BrowserJobResult;

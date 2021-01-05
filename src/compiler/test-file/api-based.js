@@ -1,9 +1,4 @@
-import {
-    dirname,
-    relative,
-    sep as pathSep
-} from 'path';
-
+import { dirname, relative, join, sep as pathSep } from 'path';
 import { readFileSync } from 'fs';
 import stripBom from 'strip-bom';
 import TestFileCompilerBase from './base';
@@ -12,9 +7,10 @@ import Fixture from '../../api/structure/fixture';
 import Test from '../../api/structure/test';
 import { TestCompilationError, APIError } from '../../errors/runtime';
 import stackCleaningHook from '../../errors/stack-cleaning-hook';
-import NODE_MODULES from '../../shared/node-modules-folder-name';
 
 const CWD = process.cwd();
+
+const EXPORTABLE_LIB_PATH = join(__dirname, '../../api/exportable-lib');
 
 const FIXTURE_RE = /(^|;|\s+)fixture\s*(\.|\(|`)/;
 const TEST_RE    = /(^|;|\s+)test\s*(\.|\()/;
@@ -29,6 +25,10 @@ export default class APIBasedTestFileCompilerBase extends TestFileCompilerBase {
         this.origRequireExtensions = Object.create(null);
     }
 
+    static get EXPORTABLE_LIB_PATH () {
+        return EXPORTABLE_LIB_PATH;
+    }
+
     static _getNodeModulesLookupPath (filename) {
         const dir = dirname(filename);
 
@@ -38,7 +38,7 @@ export default class APIBasedTestFileCompilerBase extends TestFileCompilerBase {
     static _isNodeModulesDep (filename) {
         return relative(CWD, filename)
             .split(pathSep)
-            .includes(NODE_MODULES);
+            .indexOf('node_modules') >= 0;
     }
 
     static _execAsModule (code, filename) {

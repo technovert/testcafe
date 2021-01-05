@@ -14,6 +14,7 @@ import { ActionEventArg, ReportedTestStructureItem } from './interfaces';
 import BrowserConnection from '../browser/connection';
 import Test from '../api/structure/test';
 import { VideoOptions } from '../video-recorder/interfaces';
+import { OptionValue, ScreenshotOptionValue } from '../configuration/types';
 
 export default class Task extends AsyncEventEmitter {
     private readonly _timeStamp: moment.Moment;
@@ -31,7 +32,7 @@ export default class Task extends AsyncEventEmitter {
     public readonly videos?: Videos;
 
     public constructor (tests: Test[], browserConnectionGroups: BrowserConnection[][], proxy: Proxy, opts: Dictionary<OptionValue>) {
-        super({ captureRejections: true });
+        super();
 
         this._timeStamp              = moment();
         this._running                = false;
@@ -113,7 +114,7 @@ export default class Task extends AsyncEventEmitter {
             return {
                 fixture: {
                     id:    fixture.id,
-                    name:  fixture.name as string,
+                    name:  fixture.name,
                     tests: testsByGroup.map(test => {
                         return {
                             id:   test.id,

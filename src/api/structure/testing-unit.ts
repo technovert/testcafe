@@ -1,6 +1,5 @@
-import { pathToFileURL } from 'url';
 import BaseUnit from './base-unit';
-import { assertPageUrl, getUrl } from '../test-page-url';
+import { assertUrl, resolvePageUrl } from '../test-page-url';
 import handleTagArgs from '../../utils/handle-tag-args';
 import { delegateAPI, getDelegatedAPIList } from '../../utils/delegated-api';
 import { assertType, is } from '../../errors/runtime/type-assertions';
@@ -10,13 +9,13 @@ import UnitType from './unit-type';
 import RequestHook from '../request-hooks/hook';
 import ClientScriptInit from '../../custom-client-scripts/client-script-init';
 import TestFile from './test-file';
-import { AuthCredentials, Metadata } from './interfaces';
+import { Metadata, AuthCredentials } from './interfaces';
 import { Dictionary } from '../../configuration/interfaces';
 
-export default abstract class TestingUnit extends BaseUnit {
+export default class TestingUnit extends BaseUnit {
     public readonly testFile: TestFile;
     public name: string | null;
-    public pageUrl: string;
+    public pageUrl: string | null;
     public authCredentials: null | AuthCredentials;
     public meta: Metadata;
     public only: boolean;
@@ -28,13 +27,13 @@ export default abstract class TestingUnit extends BaseUnit {
     public apiMethodWasCalled: FlagList;
     public apiOrigin: Function;
 
-    protected constructor (testFile: TestFile, unitType: UnitType, pageUrl: string) {
+    public constructor (testFile: TestFile, unitType: UnitType) {
         super(unitType);
 
         this.testFile = testFile;
 
         this.name            = null;
-        this.pageUrl         = pageUrl;
+        this.pageUrl         = null;
         this.authCredentials = null;
         this.meta            = {};
         this.only            = false;
@@ -57,7 +56,9 @@ export default abstract class TestingUnit extends BaseUnit {
         delegateAPI(this.apiOrigin, this.constructor.API_LIST, { handler: this });
     }
 
-    protected abstract _add (...args: unknown[]): unknown;
+    private _add (...args: unknown[]): never { // eslint-disable-line @typescript-eslint/no-unused-vars
+        throw new Error('Not implemented');
+    }
 
     private _only$getter (): Function {
         this.only = true;
@@ -87,9 +88,10 @@ export default abstract class TestingUnit extends BaseUnit {
         this.pageUrl = handleTagArgs(url, rest);
 
         assertType(is.string, 'page', 'The page URL', this.pageUrl);
-        assertPageUrl(this.pageUrl, 'page');
 
-        this.pageUrl = getUrl(this.pageUrl, pathToFileURL(this.testFile.filename));
+        assertUrl(this.pageUrl, 'page');
+
+        this.pageUrl = resolvePageUrl(this.pageUrl, this.testFile.filename);
 
         return this.apiOrigin;
     }
@@ -127,7 +129,7 @@ export default abstract class TestingUnit extends BaseUnit {
         return this.apiOrigin;
     }
 
-    public static makeAPIListForChildClass (ChildClass: unknown): void {
+    private static _makeAPIListForChildClass (ChildClass: unknown): void {
         //@ts-ignore
         ChildClass.API_LIST = TestingUnit.API_LIST.concat(getDelegatedAPIList(ChildClass.prototype));
     }

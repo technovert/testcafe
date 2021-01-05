@@ -1,10 +1,5 @@
 import Configuration from './configuration-base';
-import {
-    DEFAULT_TYPESCRIPT_COMPILER_OPTIONS,
-    TYPESCRIPT_COMPILER_NON_OVERRIDABLE_OPTIONS,
-    TYPESCRIPT_BLACKLISTED_OPTIONS
-} from './default-values';
-
+import { DEFAULT_TYPESCRIPT_COMPILER_OPTIONS, TYPESCRIPT_COMPILER_NON_OVERRIDABLE_OPTIONS, TYPESCRIPT_BLACKLISTED_OPTIONS } from './default-values';
 import { intersection, omit } from 'lodash';
 import WARNING_MESSAGES from '../notifications/warning-message';
 import renderTemplate from '../utils/render-template';
@@ -12,6 +7,7 @@ import { GeneralError } from '../errors/runtime';
 import { RUNTIME_ERRORS } from '../errors/types';
 import Option from './option';
 import OptionSource from './option-source';
+import { OptionValue } from './types';
 
 const lazyRequire = require('import-lazy')(require);
 const typescript  = lazyRequire('typescript');
@@ -28,15 +24,11 @@ export default class TypescriptConfiguration extends Configuration {
 
         this.basePath = process.cwd();
 
-        this._ensureDefaultOptions();
-    }
-
-    private _ensureDefaultOptions (): void {
         for (const option in DEFAULT_TYPESCRIPT_COMPILER_OPTIONS)
             this._ensureOptionWithValue(option, DEFAULT_TYPESCRIPT_COMPILER_OPTIONS[option], OptionSource.Configuration);
     }
 
-    public async init (customCompilerOptions?: object): Promise<void> {
+    public async init (): Promise<void> {
         const opts = await this._load() as TypescriptConfigurationOptions;
 
         if (opts && opts.compilerOptions) {
@@ -44,9 +36,6 @@ export default class TypescriptConfiguration extends Configuration {
 
             this.mergeOptions(parsedOpts);
         }
-
-        if (customCompilerOptions)
-            this.mergeOptions(customCompilerOptions);
 
         this._notifyThatOptionsCannotBeOverridden();
     }
@@ -80,7 +69,7 @@ export default class TypescriptConfiguration extends Configuration {
     }
 
     protected _setOptionValue (option: Option, value: OptionValue): void {
-        if (!TYPESCRIPT_COMPILER_NON_OVERRIDABLE_OPTIONS.includes(option.name))
+        if (TYPESCRIPT_COMPILER_NON_OVERRIDABLE_OPTIONS.indexOf(option.name) === -1)
             super._setOptionValue(option, value);
         else
             this._addOverriddenOptionIfNecessary(option.value, value, option.source, option.name);

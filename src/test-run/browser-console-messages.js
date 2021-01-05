@@ -3,37 +3,9 @@
 // Do not use any browser or node-specific API!
 // -------------------------------------------------------------
 
-const NATIVE_METHODS_PROPERTY_NAME = '_nativeMethods';
-
 export default class BrowserConsoleMessages {
-    constructor (data, nativeMethods) {
-        const resultNativeMethods = this._ensureNativeMethods(nativeMethods);
-
-        resultNativeMethods.objectDefineProperty(this, NATIVE_METHODS_PROPERTY_NAME, { value: resultNativeMethods });
-
+    constructor (data) {
         this.concat(data);
-    }
-
-    _ensureNativeMethods (nativeMethods) {
-        return nativeMethods || {
-            objectKeys:           Object.keys,
-            arrayForEach:         Array.prototype.forEach,
-            arrayConcat:          Array.prototype.concat,
-            arraySlice:           Array.prototype.slice,
-            objectDefineProperty: Object.defineProperty
-        };
-    }
-
-    _getWindowIds (consoleMessages) {
-        return this[NATIVE_METHODS_PROPERTY_NAME].objectKeys(consoleMessages);
-    }
-
-    _copyArray (array) {
-        return this[NATIVE_METHODS_PROPERTY_NAME].arraySlice.call(array);
-    }
-
-    _concatArrays (array, anotherArray) {
-        return this[NATIVE_METHODS_PROPERTY_NAME].arrayConcat.call(array, anotherArray);
     }
 
     ensureMessageContainer (windowId) {
@@ -52,15 +24,13 @@ export default class BrowserConsoleMessages {
         if (!consoleMessages)
             return this;
 
-        const windowIds = this._getWindowIds(consoleMessages);
-
-        this[NATIVE_METHODS_PROPERTY_NAME].arrayForEach.call(windowIds, windowId => {
+        Object.keys(consoleMessages).forEach(windowId => {
             this.ensureMessageContainer(windowId);
 
-            this[windowId].log   = this._concatArrays(this[windowId].log, consoleMessages[windowId].log);
-            this[windowId].info  = this._concatArrays(this[windowId].info, consoleMessages[windowId].info);
-            this[windowId].warn  = this._concatArrays(this[windowId].warn, consoleMessages[windowId].warn);
-            this[windowId].error = this._concatArrays(this[windowId].error, consoleMessages[windowId].error);
+            this[windowId].log   = this[windowId].log.concat(consoleMessages[windowId].log);
+            this[windowId].info  = this[windowId].info.concat(consoleMessages[windowId].info);
+            this[windowId].warn  = this[windowId].warn.concat(consoleMessages[windowId].warn);
+            this[windowId].error = this[windowId].error.concat(consoleMessages[windowId].error);
         });
 
         return this;
@@ -75,14 +45,12 @@ export default class BrowserConsoleMessages {
     getCopy () {
         const copy = {};
 
-        const windowIds = this._getWindowIds(this);
-
-        this[NATIVE_METHODS_PROPERTY_NAME].arrayForEach.call(windowIds, windowId => {
+        Object.keys(this).forEach(windowId => {
             copy[windowId] = {
-                log:   this._copyArray(this[windowId].log),
-                info:  this._copyArray(this[windowId].info),
-                warn:  this._copyArray(this[windowId].warn),
-                error: this._copyArray(this[windowId].error)
+                log:   this[windowId].log.slice(),
+                info:  this[windowId].info.slice(),
+                warn:  this[windowId].warn.slice(),
+                error: this[windowId].error.slice()
             };
         });
 

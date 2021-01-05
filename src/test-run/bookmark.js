@@ -10,7 +10,10 @@ import {
     SetPageLoadTimeoutCommand
 } from './commands/actions';
 
-import { CurrentIframeNotFoundError, CurrentIframeIsNotLoadedError } from '../errors/test-run';
+import {
+    CurrentIframeNotFoundError,
+    CurrentIframeIsNotLoadedError
+} from '../errors/test-run';
 
 export default class TestRunBookmark {
     constructor (testRun, role) {
@@ -32,7 +35,7 @@ export default class TestRunBookmark {
             await this.testRun.executeCommand(new SwitchToMainWindowCommand());
 
         if (!this.role.opts.preserveUrl)
-            await this.role.setCurrentUrlAsRedirectUrl(this.testRun);
+            this.url = await this.testRun.getCurrentUrl();
     }
 
     async _restoreDialogHandler () {
@@ -99,8 +102,9 @@ export default class TestRunBookmark {
             await this._restoreDialogHandler();
 
             const preserveUrl = this.role.opts.preserveUrl;
+            const url         = preserveUrl ? this.role.url : this.url;
 
-            await this._restorePage(this.role.redirectUrl, stateSnapshot);
+            await this._restorePage(url, stateSnapshot);
 
             if (!preserveUrl)
                 await this._restoreWorkingFrame();

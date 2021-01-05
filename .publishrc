@@ -1,13 +1,11 @@
 {
   "validations": {
     "vulnerableDependencies": false,
-    "uncommittedChanges": true,
-    "untrackedFiles": true,
     "sensitiveData": true,
     "branch": "master"
   },
   "confirm": true,
   "publishTag": "latest",
-  "prePublishScript": "gulp fast-build",
+  "prePublishScript": "gulp test-server",
   "postPublishScript": "gulp docker-publish"
 }

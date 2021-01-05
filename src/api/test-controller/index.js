@@ -1,20 +1,15 @@
 // TODO: Fix https://github.com/DevExpress/testcafe/issues/4139 to get rid of Pinkie
 import Promise from 'pinkie';
-import {
-    identity,
-    assign,
-    isNil as isNullOrUndefined,
-    flattenDeep as flatten
-} from 'lodash';
-
+import { renderers } from 'callsite-record';
+import { identity, assign, isNil as isNullOrUndefined, flattenDeep as flatten } from 'lodash';
 import { getCallsiteForMethod } from '../../errors/get-callsite';
 import ClientFunctionBuilder from '../../client-functions/client-function-builder';
 import Assertion from './assertion';
 import { getDelegatedAPIList, delegateAPI } from '../../utils/delegated-api';
 import WARNING_MESSAGE from '../../notifications/warning-message';
+import renderCallsiteSync from '../../utils/render-callsite-sync';
+import createStackFilter from '../../errors/create-stack-filter';
 import getBrowser from '../../utils/get-browser';
-import addWarning from '../../notifications/add-rendered-warning';
-import { getCallsiteId, getCallsiteStackFrameString } from '../../utils/callsite';
 
 import {
     ClickCommand,
@@ -59,12 +54,8 @@ import {
 import { WaitCommand, DebugCommand } from '../../test-run/commands/observation';
 import assertRequestHookType from '../request-hooks/assert-type';
 import { createExecutionContext as createContext } from './execution-context';
+import { AllowMultipleWindowsOptionIsNotSpecifiedError } from '../../errors/test-run';
 import { isClientFunction, isSelector } from '../../client-functions/types';
-
-import {
-    MultipleWindowsModeIsDisabledError,
-    MultipleWindowsModeIsNotAvailableInRemoteBrowserError
-} from '../../errors/test-run';
 
 const originalThen = Promise.resolve().then;
 
@@ -74,6 +65,7 @@ export default class TestController {
 
         this.testRun               = testRun;
         this.executionChain        = Promise.resolve();
+        this.callsitesWithoutAwait = new Set();
         this.warningLog            = testRun.warningLog;
     }
 
@@ -91,8 +83,7 @@ export default class TestController {
     // await t2.click('#btn3');   // <-- without check it will set callsiteWithoutAwait = null, so we will lost tracking
     _createExtendedPromise (promise, callsite) {
         const extendedPromise     = promise.then(identity);
-        const observedCallsites   = this.testRun.observedCallsites;
-        const markCallsiteAwaited = () => observedCallsites.callsitesWithoutAwait.delete(callsite);
+        const markCallsiteAwaited = () => this.callsitesWithoutAwait.delete(callsite);
 
         extendedPromise.then = function () {
             markCallsiteAwaited();
@@ -115,7 +106,7 @@ export default class TestController {
         this.executionChain.then = originalThen;
         this.executionChain      = this.executionChain.then(executor);
 
-        this.testRun.observedCallsites.callsitesWithoutAwait.add(callsite);
+        this.callsitesWithoutAwait.add(callsite);
 
         this.executionChain = this._createExtendedPromise(this.executionChain, callsite);
 
@@ -146,13 +137,8 @@ export default class TestController {
     }
 
     _validateMultipleWindowCommand (apiMethodName) {
-        const { disableMultipleWindows, browserConnection } = this.testRun;
-
-        if (disableMultipleWindows)
-            throw new MultipleWindowsModeIsDisabledError(apiMethodName);
-
-        if (!browserConnection.activeWindowId)
-            throw new MultipleWindowsModeIsNotAvailableInRemoteBrowserError(apiMethodName);
+        if (!this.testRun.allowMultipleWindows)
+            throw new AllowMultipleWindowsOptionIsNotSpecifiedError(apiMethodName);
     }
 
     getExecutionContext () {
@@ -322,7 +308,7 @@ export default class TestController {
         return this._enqueueCommand(apiMethodName, GetCurrentWindowCommand);
     }
 
-    _switchToWindow$ (windowSelector) {
+    _switchToWindow$ (windowSelector, options = {}) {
         const apiMethodName = 'switchToWindow';
 
         this._validateMultipleWindowCommand(apiMethodName);
@@ -333,7 +319,7 @@ export default class TestController {
         if (typeof windowSelector === 'function') {
             command = SwitchToWindowByPredicateCommand;
 
-            args = { findWindow: windowSelector };
+            args = { findWindow: { fn: windowSelector, options } };
         }
         else {
             command = SwitchToWindowCommand;
@@ -390,32 +376,24 @@ export default class TestController {
         return this.testRun.executeAction(name, new GetBrowserConsoleMessagesCommand(), callsite);
     }
 
-    _checkForExcessiveAwaits (snapshotPropertyCallsites, checkedCallsite) {
-        const callsiteId = getCallsiteId(checkedCallsite);
-
-        // NOTE: If there are unasserted callsites, we should add all of them to awaitedSnapshotWarnings.
-        // The warnings themselves are raised after the test run in wrap-test-function
-        if (snapshotPropertyCallsites[callsiteId] && !snapshotPropertyCallsites[callsiteId].checked) {
-            for (const propertyCallsite of snapshotPropertyCallsites[callsiteId].callsites)
-                this.testRun.observedCallsites.awaitedSnapshotWarnings.set(getCallsiteStackFrameString(propertyCallsite), propertyCallsite);
-
-            delete snapshotPropertyCallsites[callsiteId];
-        }
-        else
-            snapshotPropertyCallsites[callsiteId] = { callsites: [], checked: true };
-    }
-
     _expect$ (actual) {
         const callsite = getCallsiteForMethod('expect');
 
-        this._checkForExcessiveAwaits(this.testRun.observedCallsites.snapshotPropertyCallsites, callsite);
-
         if (isClientFunction(actual))
-            addWarning(this.warningLog, WARNING_MESSAGE.assertedClientFunctionInstance, callsite);
+            this._addWarning(WARNING_MESSAGE.assertedClientFunctionInstance, callsite);
         else if (isSelector(actual))
-            addWarning(this.warningLog, WARNING_MESSAGE.assertedSelectorInstance, callsite);
+            this._addWarning(WARNING_MESSAGE.assertedSelectorInstance, callsite);
 
         return new Assertion(actual, this, callsite);
+    }
+
+    _addWarning (message, callsite = void 0) {
+        const renderedCallsite = renderCallsiteSync(callsite, {
+            renderer:    renderers.noColor,
+            stackFilter: createStackFilter(Error.stackTraceLimit)
+        });
+
+        this.warningLog.addWarning(message + `\n\n${renderedCallsite}`);
     }
 
     _debug$ () {

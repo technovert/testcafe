@@ -1,10 +1,4 @@
-import {
-    isFinite as isFiniteNumber,
-    isRegExp,
-    isNil as isNullOrUndefined,
-    castArray
-} from 'lodash';
-
+import { isFinite as isFiniteNumber, isRegExp, isNil as isNullOrUndefined } from 'lodash';
 import { APIError, GeneralError } from './';
 import { RUNTIME_ERRORS } from '../types';
 import RequestHook from '../../api/request-hooks/hook';
@@ -30,12 +24,6 @@ function getNumberTypeActualValueMsg (value, type) {
         return Infinity;
 
     return value;
-}
-
-function hasSomePropInObject (obj, props) {
-    return !!obj &&
-        typeof obj === 'object' &&
-        props.some(prop => prop in obj);
 }
 
 export const is = {
@@ -100,20 +88,15 @@ export const is = {
 
     clientScriptInitializer: {
         name:      'client script initializer',
-        predicate: obj => hasSomePropInObject(obj, ['path', 'content', 'module'])
-    },
-
-    testTimeouts: {
-        name:      'test timeouts initializer',
-        predicate: obj => hasSomePropInObject(obj, ['pageRequestTimeout', 'ajaxRequestTimeout', 'speed'])
+        predicate: value => typeof value === 'object' && ['path', 'content', 'module'].some(prop => value && prop in value)
     }
 };
 
 export function assertType (types, callsiteName, what, value) {
-    types = castArray(types);
+    types = Array.isArray(types) ? types : [types];
 
     let pass            = false;
-    const actualType    = typeof value;
+    const actualType      = typeof value;
     let actualMsg       = actualType;
     let expectedTypeMsg = '';
     const last            = types.length - 1;

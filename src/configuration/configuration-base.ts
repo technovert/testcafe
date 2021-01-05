@@ -1,13 +1,7 @@
 import { isAbsolute } from 'path';
 import debug from 'debug';
 import JSON5 from 'json5';
-import {
-    castArray,
-    cloneDeep,
-    isPlainObject,
-    mergeWith
-} from 'lodash';
-
+import { castArray, cloneDeep, isPlainObject, mergeWith } from 'lodash';
 import { stat, readFile } from '../utils/promisified-functions';
 import Option from './option';
 import OptionSource from './option-source';
@@ -16,6 +10,7 @@ import renderTemplate from '../utils/render-template';
 import WARNING_MESSAGES from '../notifications/warning-message';
 import log from '../cli/log';
 import { Dictionary } from './interfaces';
+import { OptionValue, TemplateArguments } from './types';
 
 const DEBUG_LOGGER = debug('testcafe:configuration');
 
@@ -98,15 +93,11 @@ export default class Configuration {
         return option.value;
     }
 
-    public getOptions (predicate?: (name: string, option: Option) => boolean): Dictionary<OptionValue> {
-        const result        = Object.create(null);
-        let includeInResult = true;
+    public getOptions (): Dictionary<OptionValue> {
+        const result = Object.create(null);
 
         Object.entries(this._options).forEach(([name, option]) => {
-            includeInResult = predicate ? predicate(name, option) : true;
-
-            if (includeInResult)
-                result[name] = option.value;
+            result[name] = option.value;
         });
 
         return result;

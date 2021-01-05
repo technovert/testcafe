@@ -1,5 +1,4 @@
 import { Graph } from 'graphlib';
-import NODE_MODULES from '../../shared/node-modules-folder-name';
 
 export default class ModulesGraph {
     constructor () {
@@ -20,7 +19,7 @@ export default class ModulesGraph {
 
         if (!children) return;
 
-        children.filter(child => !child.includes(NODE_MODULES))
+        children.filter(child => child.indexOf('node_modules') === -1)
             .forEach(child => {
                 this.addNode(child, cache);
                 this.graph.setEdge(node, child);
@@ -38,7 +37,7 @@ export default class ModulesGraph {
 
         const parent = cached && cached.parent;
 
-        if (parent && !parent.id.includes(NODE_MODULES)) {
+        if (parent && parent.id.indexOf('node_modules') < 0) {
             this.addNode(parent.id, cache);
             this.graph.setEdge(parent.id, node);
         }

@@ -45,7 +45,6 @@ gulpStep.install();
 ll
     .install()
     .tasks([
-        'lint',
         'check-licenses'
     ])
     .onlyInDebug([
@@ -377,10 +376,10 @@ gulp.step('package-content', buildTasks('ts-defs', 'server-scripts', 'client-scr
 
 gulp.task('fast-build', gulp.series('clean', 'package-content'));
 
-gulp.task('build', DEV_MODE ? gulp.registry().get('fast-build') : buildTasks('lint', 'fast-build'));
+gulp.task('build', DEV_MODE ? gulp.registry().get('fast-build') : buildTasks('fast-build'));
 
 // Test
-gulp.step('prepare-tests', gulp.registry().get(SKIP_BUILD ? 'lint' : 'build'));
+gulp.step('prepare-tests', gulp.registry().get('build'));
 
 gulp.step('test-server-run', () => {
     // HACK: We have to exit from all Gulp's error domains to avoid conflicts with error handling inside mocha tests
@@ -752,7 +751,7 @@ gulp.step('website-publish-run', () => {
 
 gulp.task('publish-website', gulp.series('build-website-production', 'website-publish-run'));
 
-gulp.task('test-docs-travis', gulp.parallel('test-website-travis', 'lint'));
+gulp.task('test-docs-travis', gulp.parallel('test-website-travis'));
 
 function testFunctional (src, testingEnvironmentName, { experimentalCompilerService } = {}) {
     process.env.TESTING_ENVIRONMENT       = testingEnvironmentName;

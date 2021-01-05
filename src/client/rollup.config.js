@@ -1,5 +1,6 @@
 /* eslint-env node */
 /* eslint-disable no-restricted-globals */
+/* eslint-disable-linebreak-style */
 
 import path from 'path';
 import typescript from 'rollup-plugin-typescript2';
@@ -9,17 +10,20 @@ import inject from '@rollup/plugin-inject';
 import alias from '@rollup/plugin-alias';
 
 
-const IDLE_PAGE_CHUNK = 'browser/idle-page/index.js';
+const NO_HAMMERHEAD_CHUNKS = [
+    'browser/idle-page/index.js',
+    'browser/service-worker.js'
+];
 
 const CHUNK_NAMES = [
-    IDLE_PAGE_CHUNK,
+    ...NO_HAMMERHEAD_CHUNKS,
     'core/index.js',
     'driver/index.js',
     'ui/index.js',
     'automation/index.js'
 ];
 
-const TARGET_DIR = '../../../../../lib/src/modules/runner/src/client';
+const TARGET_DIR = '../../lib/client';
 
 const COMMON_GLOBALS = {
     'hammerhead':          'window[\'%hammerhead%\']',
@@ -33,7 +37,7 @@ const EXTENDED_GLOBALS = {
     'pinkie': 'window[\'%hammerhead%\'].Promise'
 };
 
-const GLOBALS = chunk => chunk === IDLE_PAGE_CHUNK ? COMMON_GLOBALS : EXTENDED_GLOBALS;
+const GLOBALS = chunk => NO_HAMMERHEAD_CHUNKS.includes(chunk) ? COMMON_GLOBALS : EXTENDED_GLOBALS;
 
 const CONFIG = CHUNK_NAMES.map(chunk => ({
     input:    chunk,
@@ -58,7 +62,7 @@ const CONFIG = CHUNK_NAMES.map(chunk => ({
             }]
         }),
         commonjs(),
-        typescript({ include: ['*.+(j|t)s', '**/*.+(j|t)s', '../**/*.+(j|t)s'] }),
+        typescript({ include: ['*.+(j|t)s', '**/*.+(j|t)s', '../**/*.+(j|t)s'] })
     ]
 }));
 
