@@ -2,7 +2,7 @@
   "name": "testcafe-technovert",
   "description": "Automated browser testing for the modern web development stack.",
   "license": "MIT",
-  "version": "1.10.23",
+  "version": "1.10.24",
   "author": {
     "name": "Technovert.",
     "url": "https://www.technovert.com/"
@@ -78,6 +78,7 @@
     "babel-preset-env": "1.7.0",
     "babel-plugin-module-resolver": "^4.0.0",
     "babel-plugin-syntax-trailing-function-commas": "^6.22.0",
+    "babel-preset-react": "6.24.1",
     "bin-v8-flags-filter": "^1.1.2",
     "bowser": "^2.8.1",
     "callsite": "^1.0.0",
