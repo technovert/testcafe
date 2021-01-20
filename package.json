@@ -1,8 +1,8 @@
 {
-  "name": "testcafe-technovert",
+  "name": "readytest-tc",
   "description": "Automated browser testing for the modern web development stack.",
   "license": "MIT",
-  "version": "1.10.24",
+  "version": "1.10.25",
   "author": {
     "name": "Technovert.",
     "url": "https://www.technovert.com/"
