@@ -27,10 +27,12 @@ export class MoveBehaviour {
         while (currentParent && currentParent !== commonAncestor) {
             mouseenterElements.push(currentParent);
 
-            currentParent = domUtils.getParentExceptShadowRoot(currentParent);
+            currentParent = nativeMethods.nodeParentNodeGetter.call(currentParent);
         }
 
-        for (let i = mouseenterElements.length - 1; i > -1; i--)
+        mouseenterElements.reverse();
+
+        for (let i = 0; i < mouseenterElements.length; i++)
             eventSimulator.mouseenter(mouseenterElements[i], extend({ relatedTarget: prevElement }, options));
     }
 

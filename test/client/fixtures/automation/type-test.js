@@ -548,43 +548,19 @@ $(document).ready(function () {
         const expectedAllEvents = [
             { type: 'beforeinput', data: '1' },
             { type: 'textInput', data: '1' },
-            { type: 'input', data: '1' },
             { type: 'beforeinput', data: '2' },
             { type: 'textInput', data: '2' },
-            { type: 'input', data: '2' },
             { type: 'beforeinput', data: '3' },
             { type: 'textInput', data: '3' },
-            { type: 'input', data: '3' },
         ];
 
         const expectedAllEventsReversed = [
             { type: 'textInput', data: '1' },
             { type: 'beforeinput', data: '1' },
-            { type: 'input', data: '1' },
-            { type: 'textInput', data: '2' },
-            { type: 'beforeinput', data: '2' },
-            { type: 'input', data: '2' },
-            { type: 'textInput', data: '3' },
-            { type: 'beforeinput', data: '3' },
-            { type: 'input', data: '3' }
-        ];
-
-        const expectedEventsWithoutInput = [
-            { type: 'beforeinput', data: '1' },
-            { type: 'textInput', data: '1' },
-            { type: 'beforeinput', data: '2' },
-            { type: 'textInput', data: '2' },
-            { type: 'beforeinput', data: '3' },
-            { type: 'textInput', data: '3' },
-        ];
-
-        const expectedEventsWithoutInputReversed = [
-            { type: 'textInput', data: '1' },
-            { type: 'beforeinput', data: '1' },
             { type: 'textInput', data: '2' },
             { type: 'beforeinput', data: '2' },
             { type: 'textInput', data: '3' },
-            { type: 'beforeinput', data: '3' },
+            { type: 'beforeinput', data: '3' }
         ];
 
         const expectedOnlyBeforeInput = [
@@ -628,10 +604,6 @@ $(document).ready(function () {
                 logEvents(e, log1);
             });
 
-            input1.addEventListener('input', function (e) {
-                logEvents(e, log1);
-            });
-
             input2.addEventListener('beforeinput', function (e) {
                 logEvents(e, log2);
 
@@ -639,10 +611,6 @@ $(document).ready(function () {
             });
 
             input2.addEventListener('textInput', function (e) {
-                logEvents(e, log2);
-            });
-
-            input2.addEventListener('input', function (e) {
                 logEvents(e, log2);
             });
 
@@ -654,10 +622,6 @@ $(document).ready(function () {
                 logEvents(e, log3);
 
                 e.preventDefault();
-            });
-
-            input3.addEventListener('input', function (e) {
-                logEvents(e, log3);
             });
 
             const automation1 = new TypeAutomation(input1, '123', new TypeOptions());
@@ -675,12 +639,12 @@ $(document).ready(function () {
                     if (browserUtils.isChrome) {
                         deepEqual(log1, expectedAllEvents);
                         deepEqual(log2, expectedOnlyBeforeInput);
-                        deepEqual(log3, expectedEventsWithoutInput);
+                        deepEqual(log3, expectedAllEvents);
                     }
 
                     if (browserUtils.isSafari) {
                         deepEqual(log1, expectedAllEventsReversed);
-                        deepEqual(log2, expectedEventsWithoutInputReversed);
+                        deepEqual(log2, expectedAllEventsReversed);
                         deepEqual(log3, expectedOnlyTextInput);
                     }
 
@@ -725,10 +689,6 @@ $(document).ready(function () {
                 logEvents(e, log1);
             });
 
-            input1.addEventListener('input', function (e) {
-                logEvents(e, log1);
-            });
-
             input2.addEventListener('beforeinput', function (e) {
                 logEvents(e, log2);
 
@@ -736,10 +696,6 @@ $(document).ready(function () {
             });
 
             input2.addEventListener('textInput', function (e) {
-                logEvents(e, log2);
-            });
-
-            input2.addEventListener('input', function (e) {
                 logEvents(e, log2);
             });
 
@@ -751,10 +707,6 @@ $(document).ready(function () {
                 logEvents(e, log3);
 
                 e.preventDefault();
-            });
-
-            input3.addEventListener('input', function (e) {
-                logEvents(e, log3);
             });
 
             const automation1 = new TypeAutomation(input1, '123', new TypeOptions());
@@ -772,7 +724,7 @@ $(document).ready(function () {
                     if (browserUtils.isChrome) {
                         deepEqual(log1, expectedAllEvents);
                         deepEqual(log2, expectedOnlyBeforeInput);
-                        deepEqual(log3, expectedEventsWithoutInput);
+                        deepEqual(log3, expectedAllEvents);
                     }
 
                     if (browserUtils.isSafari) {
