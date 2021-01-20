@@ -9,12 +9,10 @@ const config                     = require('../../config');
 const SCREENSHOTS_PATH = config.testScreenshotsDir;
 
 async function assertScreenshotColor (fileName, pixel) {
-    for (const browser of config.currentEnvironment.browsers) {
-        const filePath = path.join(SCREENSHOTS_PATH, 'custom', browser.alias + fileName);
-        const png      = await readPngFile(filePath);
+    const filePath = path.join(SCREENSHOTS_PATH, 'custom', fileName);
+    const png      = await readPngFile(filePath);
 
-        expect(assertionHelper.hasPixel(png, pixel, 0, 0)).eql(true);
-    }
+    expect(assertionHelper.hasPixel(png, pixel, 0, 0)).eql(true);
 }
 
 describe('Multiple windows', () => {
@@ -104,7 +102,7 @@ describe('Multiple windows', () => {
     });
 
     it('Should make screenshots of different windows', () => {
-        return runTests('testcafe-fixtures/features/screenshots.js', null, { setScreenshotPath: true })
+        return runTests('testcafe-fixtures/features/screenshots.js', null, { only: 'chrome', setScreenshotPath: true })
             .then(() => {
                 return assertScreenshotColor('0.png', RED_PIXEL);
             })
